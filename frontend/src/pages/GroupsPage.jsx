@@ -1,53 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GROUPS } from '../data/mockData';
+import api from '../api';
 import { useToast } from '../components/ToastProvider';
 
 function GroupCard({ group, onClick }) {
     const avatarColors = ['#6366f1', '#22c55e', '#3b82f6', '#f59e0b'];
+    // In our backend, GroupOut doesn't return members/balance yet, so we have default 1 member, 0 balance
+    const membersCount = group.members_count || 1; 
+    const balance = group.balance || 0;
+
     return (
         <div onClick={onClick} className="bg-bg-card border border-border rounded-[20px] p-6 cursor-pointer hover:-translate-y-[3px] hover:border-[rgba(99,102,241,0.3)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-all relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-20 h-20 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.1),transparent)]" />
-            <div className="text-4xl mb-4">{group.emoji}</div>
+            <div className="text-4xl mb-4">{group.emoji || '👥'}</div>
             <div className="text-base font-bold mb-1.5">{group.name}</div>
-            <div className="text-xs text-text-secondary mb-[18px]">{group.desc}</div>
+            <div className="text-xs text-text-secondary mb-[18px] truncate">{group.description || 'No description'}</div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                     <div className="flex">
-                        {Array.from({ length: Math.min(group.members, 4) }, (_, i) => (
+                        {Array.from({ length: Math.min(membersCount, 4) }, (_, i) => (
                             <div key={i} className="w-[26px] h-[26px] rounded-full border-2 border-bg-card flex items-center justify-center text-[0.7rem] font-bold text-white" style={{ background: avatarColors[i % 4], marginLeft: i > 0 ? -8 : 0 }}>
                                 {String.fromCharCode(65 + i)}
                             </div>
                         ))}
                     </div>
-                    <span className="text-xs text-text-muted ml-1">{group.members} members</span>
+                    <span className="text-xs text-text-muted ml-1">{membersCount} members</span>
                 </div>
                 <div className="text-right">
-                    <div className={`text-sm font-bold ${group.balance > 0 ? 'text-green' : group.balance < 0 ? 'text-red' : ''}`}>
-                        {group.balance > 0 ? '+' : ''}₹{Math.abs(group.balance).toLocaleString()}
+                    <div className={`text-sm font-bold ${balance > 0 ? 'text-green' : balance < 0 ? 'text-red' : ''}`}>
+                        {balance > 0 ? '+' : ''}₹{Math.abs(balance).toLocaleString()}
                     </div>
-                    <div className="text-[0.72rem] text-text-muted">{group.balance > 0 ? 'you receive' : group.balance < 0 ? 'you owe' : 'settled'}</div>
+                    <div className="text-[0.72rem] text-text-muted">{balance > 0 ? 'you receive' : balance < 0 ? 'you owe' : 'settled'}</div>
                 </div>
             </div>
         </div>
     );
 }
 
-function CreateGroupModal({ open, onClose }) {
+function CreateGroupModal({ open, onClose, onCreated }) {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
-    const [emoji, setEmoji] = useState('');
-    const [emails, setEmails] = useState('');
+    const [emoji, setEmoji] = useState('👥');
+    const [loading, setLoading] = useState(false);
     const showToast = useToast();
-    const emojis = ['🏖', '🏠', '🎓', '💼', '🎉', '🍕', '⚽', '🚗'];
+    const emojis = ['🏖', '🏠', '🎓', '💼', '🎉', '🍕', '⚽', '🚗', '👥'];
 
     if (!open) return null;
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         if (!name) { showToast('error', 'Missing', 'Please enter a group name'); return; }
-        onClose();
-        showToast('success', 'Group Created!', `"${name}" created. Invite links sent.`);
-        setName(''); setDesc(''); setEmoji(''); setEmails('');
+        setLoading(true);
+        try {
+            const res = await api.post('/api/groups', {
+                name,
+                description: desc,
+                emoji
+            });
+            showToast('success', 'Group Created!', `"${name}" created successfully.`);
+            onCreated(res.data);
+            onClose();
+            setName(''); setDesc(''); setEmoji('👥');
+        } catch(e) {
+            showToast('error', 'Failed', 'Could not create group.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -73,13 +90,11 @@ function CreateGroupModal({ open, onClose }) {
                         ))}
                     </div>
                 </div>
-                <div className="mb-5">
-                    <label className="block text-sm text-text-secondary font-medium mb-2">Invite Members (by email)</label>
-                    <input type="text" value={emails} onChange={e => setEmails(e.target.value)} placeholder="rohan@gmail.com, anita@gmail.com..." className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition placeholder:text-text-muted" />
-                </div>
-                <div className="flex gap-3 mt-2">
+                <div className="flex gap-3 mt-7">
                     <button onClick={onClose} className="flex-1 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">Cancel</button>
-                    <button onClick={handleCreate} className="flex-[2] px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition">Create Group →</button>
+                    <button disabled={loading} onClick={handleCreate} className="flex-[2] px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition disabled:opacity-50">
+                        {loading ? 'Creating...' : 'Create Group →'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -88,23 +103,39 @@ function CreateGroupModal({ open, onClose }) {
 
 export default function GroupsPage() {
     const [modalOpen, setModalOpen] = useState(false);
+    const [groups, setGroups] = useState([]);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        api.get('/api/groups')
+            .then(res => setGroups(res.data))
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleCreated = (newGroup) => {
+        setGroups([newGroup, ...groups]);
+    }
+
+    if (loading) return <div className="p-8 text-text-muted">Loading groups...</div>;
 
     return (
         <div className="animate-fade-in">
             <div className="flex items-center justify-between mb-7">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">My Groups</h1>
-                    <p className="text-text-secondary text-sm mt-1">6 active groups · ₹12,480 total shared expenses</p>
+                    <p className="text-text-secondary text-sm mt-1">{groups.length} active groups</p>
                 </div>
                 <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition">+ Create Group</button>
             </div>
+            {groups.length === 0 && <div className="text-text-muted mb-4">You have no groups yet. Create one!</div>}
             <div className="grid grid-cols-3 gap-5">
-                {GROUPS.map(g => (
+                {groups.map(g => (
                     <GroupCard key={g.id} group={g} onClick={() => navigate(`/groups/${g.id}`)} />
                 ))}
             </div>
-            <CreateGroupModal open={modalOpen} onClose={() => setModalOpen(false)} />
+            <CreateGroupModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={handleCreated} />
         </div>
     );
 }

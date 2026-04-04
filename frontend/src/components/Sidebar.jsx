@@ -1,29 +1,19 @@
 import { NavLink, useLocation } from 'react-router-dom';
-
-const navItems = [
+import { useAuth } from '../contexts/AuthContext';const navItems = [
     {
         section: 'Main', items: [
             { to: '/', icon: '🏠', label: 'Dashboard' },
             { to: '/groups', icon: '👥', label: 'Groups' },
             { to: '/expenses', icon: '🧾', label: 'Expenses', badge: 3 },
-            { to: '/settlements', icon: '⚡', label: 'Settlements' },
         ]
-    },
-    {
-        section: 'Finance', items: [
-            { to: '/wallet', icon: '💳', label: 'Wallet' },
-            { to: '/analytics', icon: '📊', label: 'Analytics' },
-        ]
-    },
-    {
-        section: 'Admin', items: [
-            { to: '/verification', icon: '✅', label: 'Verify Expenses', badge: 5 },
-        ]
-    },
+    }
 ];
-
 export default function Sidebar() {
     const location = useLocation();
+    const { user } = useAuth();
+    
+    const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+    const init = displayName.substring(0, 2).toUpperCase();
 
     return (
         <aside className="w-60 bg-bg-sidebar border-r border-border fixed top-0 left-0 bottom-0 flex flex-col z-[100]">
@@ -70,10 +60,10 @@ export default function Sidebar() {
             {/* User Profile */}
             <div className="p-4 border-t border-border">
                 <div className="flex items-center gap-3 p-2.5 rounded-[10px] cursor-pointer hover:bg-white/5 transition">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-[#a78bfa] flex items-center justify-center text-xs font-bold text-white shrink-0">PS</div>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent to-[#a78bfa] flex items-center justify-center text-xs font-bold text-white shrink-0">{init}</div>
                     <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold truncate">Priya Sharma</div>
-                        <div className="text-xs text-yellow">Admin</div>
+                        <div className="text-sm font-semibold truncate">{displayName}</div>
+                        <div className="text-xs text-text-muted">Personal Workspace</div>
                     </div>
                     <span className="text-text-muted text-sm">⚙</span>
                 </div>

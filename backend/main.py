@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import get_connection
 
 app = FastAPI()
 
@@ -15,3 +16,13 @@ app.add_middleware(
 @app.get("/")
 def home():
     return {"message": "Backend working"}
+
+@app.get("/test-db")
+def test_db():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT 1;")
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    return {"result": result}

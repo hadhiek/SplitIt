@@ -1,20 +1,69 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PARTICIPANTS as INITIAL_PARTICIPANTS } from '../data/mockData';
+import api from '../api';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/ToastProvider';
 
 export default function AddExpensePage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const showToast = useToast();
+
+    // Data
+    const [groups, setGroups] = useState([]);
+    const [members, setMembers] = useState([]);
+
+    // Form State
     const [amount, setAmount] = useState('');
     const [desc, setDesc] = useState('');
-    const [category, setCategory] = useState('🍽️ Food & Dining');
-    const [group, setGroup] = useState('🏖 Goa Trip 2026');
+    const [category, setCategory] = useState('Food & Dining');
+    const [groupId, setGroupId] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [paidBy, setPaidBy] = useState('Priya Sharma (You)');
+    const [paidBy, setPaidBy] = useState('');
     const [splitType, setSplitType] = useState('equal');
-    const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS.map(p => ({ ...p })));
+    const [participants, setParticipants] = useState([]); // Array of { id, selected }
     const [fileName, setFileName] = useState('');
-    const showToast = useToast();
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+
+    // Initial load: Fetch groups
+    useEffect(() => {
+        api.get('/api/groups')
+            .then(res => {
+                setGroups(res.data);
+                if (res.data.length > 0) {
+                    setGroupId(res.data[0].id);
+                }
+            })
+            .catch(err => console.error(err));
+    }, []);
+
+    // Watch groupId, fetch its members
+    useEffect(() => {
+        if (!groupId) return;
+        
+        api.get(`/api/groups/${groupId}`)
+            .then(res => {
+                const groupMembers = res.data.members || [];
+                setMembers(groupMembers);
+                
+                // Reset participants selection
+                const initialParts = groupMembers.map(m => ({
+                    id: m.user_id,
+                    name: m.user?.full_name || m.user?.email || 'Unknown',
+                    selected: true,
+                }));
+                setParticipants(initialParts);
+                
+                // Default paid by to self if self is in group, else first member
+                const meInGroup = groupMembers.find(m => m.user_id === user?.id);
+                if (meInGroup) {
+                    setPaidBy(meInGroup.user_id);
+                } else if (groupMembers.length > 0) {
+                    setPaidBy(groupMembers[0].user_id);
+                }
+            })
+            .catch(err => console.error(err));
+    }, [groupId, user?.id]);
 
     const toggleParticipant = (idx) => {
         setParticipants(prev => prev.map((p, i) => i === idx ? { ...p, selected: !p.selected } : p));
@@ -23,17 +72,51 @@ export default function AddExpensePage() {
     const selectAll = () => setParticipants(prev => prev.map(p => ({ ...p, selected: true })));
 
     const selected = participants.filter(p => p.selected);
-    const perPerson = selected.length > 0 && Number(amount) > 0 ? Math.round(Number(amount) / selected.length) : 0;
+    const splitAmount = (selected.length > 0 && Number(amount) > 0) ? (Number(amount) / selected.length) : 0;
+    // We round for display but we will send exact float to backend
+    const perPerson = Math.round(splitAmount * 100) / 100;
 
     const handleDragOver = useCallback(e => { e.preventDefault(); e.currentTarget.classList.add('border-accent', 'bg-accent-dim'); }, []);
     const handleDragLeave = useCallback(e => { e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); }, []);
     const handleDrop = useCallback(e => { e.preventDefault(); e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); if (e.dataTransfer.files[0]) setFileName(e.dataTransfer.files[0].name); }, []);
     const handleFileSelect = (e) => { if (e.target.files[0]) setFileName(e.target.files[0].name); };
 
-    const submit = () => {
-        if (!amount || !desc) { showToast('error', 'Missing Info', 'Please fill amount and description'); return; }
-        showToast('success', 'Expense Submitted!', `₹${Number(amount).toLocaleString()} — "${desc}" sent for approval`);
-        setTimeout(() => navigate('/expenses'), 1200);
+    const submit = async () => {
+        const amt = parseFloat(amount);
+        if (!amt || !desc || !groupId || !paidBy) { 
+            showToast('error', 'Missing Info', 'Please fill amount, description, and group'); 
+            return; 
+        }
+
+        if (selected.length === 0) {
+            showToast('error', 'No splitting', 'Must select at least one person to split');
+            return;
+        }
+
+        const splits = selected.map(p => ({
+            user_id: p.id,
+            amount_owed: amt / selected.length
+        }));
+
+        setLoading(true);
+        try {
+            await api.post('/api/expenses', {
+                 group_id: Number(groupId),
+                 paid_by: paidBy,
+                 amount: amt,
+                 description: desc,
+                 category: category,
+                 receipt_url: null, // Mocks receipt url automatically for now
+                 expense_date: new Date(date).toISOString(),
+                 splits: splits 
+            });
+            showToast('success', 'Expense Submitted!', `₹${amt.toLocaleString()} — "${desc}" recorded`);
+            setTimeout(() => navigate('/expenses'), 1200);
+        } catch(e) {
+            showToast('error', 'Error', e.response?.data?.detail || 'Failed to create expense');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const splitTypes = [
@@ -41,6 +124,8 @@ export default function AddExpensePage() {
         { key: 'custom', icon: '✏️', label: 'Custom', desc: 'Set amounts' },
         { key: 'percent', icon: '%', label: 'Percentage', desc: 'By ratio' },
     ];
+
+    const categories = ['Food & Dining', 'Accommodation', 'Transport', 'Entertainment', 'Shopping', 'Health', 'Other'];
 
     return (
         <div className="animate-fade-in">
@@ -75,13 +160,14 @@ export default function AddExpensePage() {
                             <div>
                                 <label className="block text-sm text-text-secondary font-medium mb-2">Category</label>
                                 <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition cursor-pointer appearance-none">
-                                    {['🍽️ Food & Dining', '🏨 Accommodation', '🚗 Transport', '🎉 Entertainment', '🛒 Shopping', '💊 Health', '📦 Other'].map(c => <option key={c}>{c}</option>)}
+                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm text-text-secondary font-medium mb-2">Group</label>
-                                <select value={group} onChange={e => setGroup(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition cursor-pointer appearance-none">
-                                    {['🏖 Goa Trip 2026', '🏠 Flat Expenses', '🍕 Office Lunch', '🎓 College Friends'].map(g => <option key={g}>{g}</option>)}
+                                <select value={groupId} onChange={e => setGroupId(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition cursor-pointer appearance-none">
+                                    {groups.length === 0 && <option value="">No Groups</option>}
+                                    {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -93,7 +179,11 @@ export default function AddExpensePage() {
                             <div>
                                 <label className="block text-sm text-text-secondary font-medium mb-2">Paid By</label>
                                 <select value={paidBy} onChange={e => setPaidBy(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition cursor-pointer appearance-none">
-                                    {['Priya Sharma (You)', 'Rohan Kumar', 'Anita Desai', 'Ketan Shah'].map(p => <option key={p}>{p}</option>)}
+                                    {members.length === 0 && <option value="">Loading...</option>}
+                                    {members.map(m => {
+                                        const name = m.user?.full_name || m.user?.email || 'Unknown';
+                                        return <option key={m.user_id} value={m.user_id}>{name} {m.user_id === user?.id ? '(You)' : ''}</option>;
+                                    })}
                                 </select>
                             </div>
                         </div>
@@ -121,8 +211,8 @@ export default function AddExpensePage() {
                 {/* Right Column */}
                 <div className="flex flex-col gap-6">
                     {/* Split Type */}
-                    <div className="bg-bg-card border border-border rounded-[20px] p-6">
-                        <div className="text-[0.95rem] font-semibold mb-4">Split Method</div>
+                    <div className="bg-bg-card border border-border rounded-[20px] p-6 opacity-60 pointer-events-none">
+                        <div className="text-[0.95rem] font-semibold mb-4">Split Method (Only Equal Available Temporarily)</div>
                         <div className="flex gap-3">
                             {splitTypes.map(s => (
                                 <button key={s.key} onClick={() => setSplitType(s.key)} className={`flex-1 p-4 rounded-[14px] text-center transition border ${splitType === s.key ? 'border-accent bg-accent-dim' : 'border-border bg-bg-card hover:border-[rgba(99,102,241,0.3)]'}`}>
@@ -141,21 +231,26 @@ export default function AddExpensePage() {
                             <button onClick={selectAll} className="text-xs text-text-secondary hover:bg-white/5 px-3 py-1 rounded-md transition">Select All</button>
                         </div>
                         <div className="flex flex-col gap-2">
-                            {participants.map((p, i) => (
-                                <div key={i} onClick={() => toggleParticipant(i)} className={`flex items-center gap-3 px-4 py-3 rounded-[10px] border cursor-pointer transition ${p.selected ? 'border-accent bg-accent-dim' : 'border-border hover:border-[rgba(99,102,241,0.3)]'}`}>
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0" style={{ background: p.color }}>{p.initials}</div>
-                                    <div className="flex-1 text-sm font-medium">{p.name}</div>
+                            {participants.length === 0 && <div className="text-text-muted text-sm">Select a group to see members</div>}
+                            {participants.map((p, i) => {
+                                const initials = p.name ? p.name.substring(0,2).toUpperCase() : '??';
+                                return (
+                                <div key={p.id} onClick={() => toggleParticipant(i)} className={`flex items-center gap-3 px-4 py-3 rounded-[10px] border cursor-pointer transition ${p.selected ? 'border-accent bg-accent-dim' : 'border-border hover:border-[rgba(99,102,241,0.3)]'}`}>
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-blue-500">{initials}</div>
+                                    <div className="flex-1 text-sm font-medium">{p.name} {p.id === user?.id ? '(You)' : ''}</div>
                                     <div className="text-sm text-text-muted">{p.selected && perPerson > 0 ? `₹${perPerson}` : ''}</div>
                                     <div className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center transition text-xs ${p.selected ? 'bg-accent border-accent text-white' : 'border-border'}`}>{p.selected ? '✓' : ''}</div>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-3">
                         <Link to="/expenses" className="flex-1 text-center px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">Cancel</Link>
-                        <button onClick={submit} className="flex-[2] px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition">Submit Expense →</button>
+                        <button disabled={loading} onClick={submit} className="flex-[2] px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition disabled:opacity-50">
+                            {loading ? 'Submitting...' : 'Submit Expense →'}
+                        </button>
                     </div>
                 </div>
             </div>

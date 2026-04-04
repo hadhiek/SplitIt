@@ -1,17 +1,52 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { EXPENSES, VERIFY_EXPENSES, formatDate } from '../data/mockData';
+import api from '../api';
+import { useAuth } from '../contexts/AuthContext';
 import { SummaryCard, StatusBadge } from '../components/ui';
 
+// Helper for date formatting
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function DashboardPage() {
-    const recent = EXPENSES.slice(0, 5);
-    const pending = VERIFY_EXPENSES.slice(0, 3);
+    const { user } = useAuth();
+    const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchDashboard() {
+            try {
+                // Fetch profile to get real full name and ensure user row is synced
+                const profileRes = await api.get('/api/users/me');
+                setProfile(profileRes.data);
+            } catch (err) {
+                console.error("Failed to load dashboard data", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchDashboard();
+    }, []);
+
+    // Temporarily keeping mock data for visual sections that aren't hooked to backend yet
+    const recent = []; 
+    const pending = [];
+
+    const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User';
+
+    if (loading) {
+        return <div className="p-8 text-text-muted">Loading dashboard...</div>;
+    }
 
     return (
         <div className="animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between mb-7">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Good evening, Priya 👋</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Good evening, {displayName} 👋</h1>
                     <p className="text-text-secondary text-sm mt-1">Here's your financial overview for today</p>
                 </div>
                 <div className="flex gap-2.5">
@@ -22,10 +57,10 @@ export default function DashboardPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-5 mb-8">
-                <SummaryCard icon="💳" iconBg="rgba(99,102,241,0.15)" label="Wallet Balance" value="₹4,280" colorClass="purple" change={{ up: true, text: '↑ ₹320 this week' }} />
-                <SummaryCard icon="📤" iconBg="rgba(239,68,68,0.12)" label="You Owe" value="₹1,840" colorClass="red" valueClass="text-red" change={{ text: 'Across 3 groups' }} />
-                <SummaryCard icon="📥" iconBg="rgba(34,197,94,0.12)" label="You Are Owed" value="₹3,120" colorClass="green" valueClass="text-green" change={{ up: true, text: '↑ ₹450 since yesterday' }} />
-                <SummaryCard icon="👥" iconBg="rgba(59,130,246,0.12)" label="Active Groups" value="6" colorClass="blue" change={{ text: '2 pending expenses' }} />
+                <SummaryCard icon="💳" iconBg="rgba(99,102,241,0.15)" label="Wallet Balance" value="₹0" colorClass="purple" change={{ up: true, text: 'Active' }} />
+                <SummaryCard icon="📤" iconBg="rgba(239,68,68,0.12)" label="You Owe" value="₹0" colorClass="red" valueClass="text-red" change={{ text: '0 payments' }} />
+                <SummaryCard icon="📥" iconBg="rgba(34,197,94,0.12)" label="You Are Owed" value="₹0" colorClass="green" valueClass="text-green" change={{ up: true, text: 'From 0 people' }} />
+                <SummaryCard icon="👥" iconBg="rgba(59,130,246,0.12)" label="Active Groups" value="0" colorClass="blue" change={{ text: '0 pending expenses' }} />
             </div>
 
             {/* Two Column */}
@@ -39,6 +74,7 @@ export default function DashboardPage() {
                         </div>
                         <Link to="/expenses" className="text-xs text-accent-light hover:underline">View All</Link>
                     </div>
+                    {recent.length === 0 && <div className="text-sm text-text-muted py-4">No recent expenses found.</div>}
                     {recent.map(e => (
                         <div key={e.id} className="flex items-center gap-4 py-3.5 border-b border-border last:border-b-0 hover:bg-white/[0.02] transition cursor-pointer">
                             <div className="w-10 h-10 rounded-[10px] bg-[rgba(99,102,241,0.1)] flex items-center justify-center text-lg shrink-0">{e.cat}</div>
@@ -68,8 +104,9 @@ export default function DashboardPage() {
                             <div className="text-[0.95rem] font-semibold">Pending Approvals</div>
                             <div className="text-xs text-text-muted mt-0.5">Awaiting your review</div>
                         </div>
-                        <span className="inline-flex items-center gap-[5px] px-2.5 py-[3px] rounded-full text-xs font-semibold bg-yellow-dim text-yellow">5 pending</span>
+                        <span className="inline-flex items-center gap-[5px] px-2.5 py-[3px] rounded-full text-xs font-semibold bg-yellow-dim text-yellow">0 pending</span>
                     </div>
+                    {pending.length === 0 && <div className="text-sm text-text-muted py-4">You have no pending approvals.</div>}
                     {pending.map(v => (
                         <div key={v.id} className="flex items-center gap-3 py-2.5 border-b border-border last:border-b-0">
                             <span className="text-2xl">{v.receipt}</span>

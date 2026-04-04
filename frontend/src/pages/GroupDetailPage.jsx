@@ -1,15 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { GROUPS, GD_EXPENSES, GD_MEMBERS, SETTLEMENTS } from '../data/mockData';
+import api from '../api';
+import { GD_EXPENSES, SETTLEMENTS } from '../data/mockData';
 import { StatusBadge, Badge, Avatar } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
 
 export default function GroupDetailPage() {
     const { id } = useParams();
-    const group = GROUPS.find(g => g.id === Number(id)) || GROUPS[0];
-    const [activeTab, setActiveTab] = useState('expenses');
+    const [group, setGroup] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('members');
     const showToast = useToast();
     const tabs = ['expenses', 'members', 'settlements'];
+
+    useEffect(() => {
+        api.get(`/api/groups/${id}`)
+            .then(res => setGroup(res.data))
+            .catch(err => {
+                console.error(err);
+                showToast('error', 'Error', 'Failed to load group details');
+            })
+            .finally(() => setLoading(false));
+    }, [id, showToast]);
+
+    if (loading) return <div className="p-8 text-text-muted">Loading group details...</div>;
+    if (!group) return <div className="p-8 text-text-muted">Group not found.</div>;
+
+    const memberCount = group.members?.length || 1;
 
     return (
         <div className="animate-fade-in">
@@ -18,8 +35,8 @@ export default function GroupDetailPage() {
                 <div className="flex items-center gap-3">
                     <Link to="/groups" className="inline-flex items-center px-2.5 py-2.5 rounded-[10px] text-text-secondary hover:bg-white/5 hover:text-text-primary transition">←</Link>
                     <div>
-                        <h1 className="text-2xl font-bold">{group.emoji} {group.name}</h1>
-                        <p className="text-text-secondary text-sm mt-1">{group.members} Members</p>
+                        <h1 className="text-2xl font-bold">{group.emoji || '👥'} {group.name}</h1>
+                        <p className="text-text-secondary text-sm mt-1">{memberCount} Members</p>
                     </div>
                 </div>
                 <div className="flex gap-2.5">
@@ -28,14 +45,14 @@ export default function GroupDetailPage() {
                 </div>
             </div>
 
-            {/* Stats Row */}
+            {/* Stats Row (Mocked for now) */}
             <div className="bg-bg-card border border-border rounded-[20px] px-6 py-5 mb-6">
                 <div className="flex gap-6 items-center px-6">
                     {[
-                        { label: 'Total Spent', value: '₹28,400' },
-                        { label: 'You Paid', value: '₹9,200', cls: 'text-green' },
-                        { label: 'Your Share', value: '₹5,840' },
-                        { label: 'Balance', value: '+₹3,360', cls: 'text-green' },
+                        { label: 'Total Spent', value: '₹0' },
+                        { label: 'You Paid', value: '₹0', cls: 'text-green' },
+                        { label: 'Your Share', value: '₹0' },
+                        { label: 'Balance', value: '₹0', cls: 'text-green' },
                     ].map((s, i) => (
                         <div key={s.label} className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
@@ -64,6 +81,7 @@ export default function GroupDetailPage() {
             {/* Tab Content */}
             {activeTab === 'expenses' && (
                 <div className="overflow-x-auto rounded-[14px] bg-bg-card border border-border animate-fade-in">
+                    <div className="text-sm p-5 text-text-muted">Expenses fetched dynamically coming soon. Displaying mock data for layout testing.</div>
                     <table className="w-full border-collapse">
                         <thead>
                             <tr>
@@ -90,24 +108,29 @@ export default function GroupDetailPage() {
 
             {activeTab === 'members' && (
                 <div className="bg-bg-card border border-border rounded-[20px] p-6 animate-fade-in">
-                    {GD_MEMBERS.map(m => (
-                        <div key={m.email} className="flex items-center gap-3.5 py-3.5 border-b border-border last:border-b-0">
-                            <Avatar initials={m.initials} color={m.color} />
-                            <div className="flex-1">
-                                <div className="text-sm font-semibold">{m.name} <Badge color={m.role === 'Admin' ? 'blue' : m.role === 'Co-admin' ? 'yellow' : 'gray'}>{m.role}</Badge></div>
-                                <div className="text-xs text-text-muted mt-0.5">{m.email}</div>
+                    {group.members?.map(m => {
+                        const name = m.user?.full_name || 'Unknown User';
+                        const initials = name.substring(0,2).toUpperCase();
+                        return (
+                            <div key={m.user_id} className="flex items-center gap-3.5 py-3.5 border-b border-border last:border-b-0">
+                                <Avatar initials={initials} color="#6366f1" />
+                                <div className="flex-1">
+                                    <div className="text-sm font-semibold">{name} <Badge color={m.role === 'admin' ? 'blue' : m.role === 'co-admin' ? 'yellow' : 'gray'}>{m.role}</Badge></div>
+                                    <div className="text-xs text-text-muted mt-0.5">{m.user?.email || ''}</div>
+                                </div>
+                                <div className={`text-sm font-bold`}>
+                                    ₹0
+                                </div>
+                                <button onClick={() => showToast('info', 'Member', 'Manage member options coming soon!')} className="px-3.5 py-1.5 rounded-[10px] text-xs font-semibold text-text-secondary hover:bg-white/5 transition">···</button>
                             </div>
-                            <div className={`text-sm font-bold ${m.balance > 0 ? 'text-green' : m.balance < 0 ? 'text-red' : ''}`}>
-                                {m.balance > 0 ? '+' : ''}₹{Math.abs(m.balance)}
-                            </div>
-                            <button onClick={() => showToast('info', 'Member', 'Manage member options coming soon!')} className="px-3.5 py-1.5 rounded-[10px] text-xs font-semibold text-text-secondary hover:bg-white/5 transition">···</button>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
             {activeTab === 'settlements' && (
                 <div className="flex flex-col gap-2.5 animate-fade-in">
+                    <div className="text-sm pb-2 text-text-muted">Settlements fetched dynamically coming soon. Displaying mock data for layout testing.</div>
                     {SETTLEMENTS.slice(0, 3).map(s => (
                         <div key={s.id} className="flex items-center gap-4 p-5 bg-bg-card border border-border rounded-[14px] hover:border-white/10 transition">
                             <Avatar initials={s.from.substring(0, 2)} color={s.fromColor} size={42} />
