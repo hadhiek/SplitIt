@@ -26,7 +26,7 @@ export default function ExpensesPage() {
                 
                 const gMap = {};
                 gridRes.data.forEach(g => {
-                    gMap[g.id] = g.name;
+                    gMap[g.id] = g;
                 });
                 setGroupsMap(gMap);
             } catch (err) {
@@ -39,11 +39,12 @@ export default function ExpensesPage() {
         fetchData();
     }, [showToast]);
 
-    const groupOptions = ['All Groups', ...Object.values(groupsMap)];
+    const groupOptions = ['All Groups', ...Object.values(groupsMap).map(g => g.name)];
     const statusOptions = ['All Status', 'approved', 'pending', 'rejected'];
 
     const filtered = expenses.filter(e => {
-        const groupName = groupsMap[e.group_id] || 'Unknown Group';
+        const group = groupsMap[e.group_id];
+        const groupName = group?.name || 'Unknown Group';
         if (groupFilter !== 'All Groups' && groupName !== groupFilter) return false;
         if (statusFilter !== 'All Status' && e.status !== statusFilter) return false;
         return true;
@@ -97,13 +98,15 @@ export default function ExpensesPage() {
                                             <strong>{e.description}</strong>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-3.5 text-sm text-text-secondary">{groupsMap[e.group_id] || 'Unknown'}</td>
+                                    <td className="px-5 py-3.5 text-sm text-text-secondary">{groupsMap[e.group_id]?.name || 'Unknown'}</td>
                                     <td className="px-5 py-3.5 text-sm text-text-secondary">{iPaid ? 'You' : 'Someone'}</td>
                                     <td className="px-5 py-3.5 text-sm font-bold">₹{e.amount?.toLocaleString()}</td>
                                     <td className={`px-5 py-3.5 text-sm ${iPaid ? 'text-green font-bold' : 'text-red font-bold'}`}>
                                         ₹{myShare?.toLocaleString()}
                                     </td>
-                                    <td className="px-5 py-3.5"><StatusBadge status={e.status || 'approved'} /></td>
+                                    <td className="px-5 py-3.5">
+                                        <StatusBadge status={(groupsMap[e.group_id] && Math.abs(groupsMap[e.group_id].user_balance || 0) < 0.05) ? 'settled' : (e.status || 'pending')} />
+                                    </td>
                                     <td className="px-5 py-3.5 text-sm text-text-muted">
                                         {new Date(e.expense_date || e.created_at).toLocaleDateString('en-IN')}
                                     </td>

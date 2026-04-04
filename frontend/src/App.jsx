@@ -12,6 +12,8 @@ import GroupsPage from './pages/GroupsPage';
 import GroupDetailPage from './pages/GroupDetailPage';
 import ExpensesPage from './pages/ExpensesPage';
 import AddExpensePage from './pages/AddExpensePage';
+import SettlementsPage from './pages/SettlementsPage';
+import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -58,6 +60,8 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/groups" element={<GroupsPage />} />
               <Route path="/groups/:id" element={<GroupDetailPage />} />
+              <Route path="/groups/:id/settlements" element={<SettlementsPage />} />
+              <Route path="/settlements" element={<GlobalSettlementsPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/add-expense" element={<AddExpensePage />} />
             </Route>

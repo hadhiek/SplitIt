@@ -35,7 +35,7 @@ export function Badge({ color = 'gray', children }) {
 }
 
 export function StatusBadge({ status }) {
-    const color = status === 'approved' ? 'green' : status === 'pending' ? 'yellow' : 'red';
+    const color = (status === 'approved' || status === 'settled') ? 'green' : status === 'pending' ? 'yellow' : 'red';
     return <Badge color={color}>{status}</Badge>;
 }
 
