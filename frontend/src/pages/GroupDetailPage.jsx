@@ -5,12 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge, Badge, Avatar } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
 import SettleUpModal from '../components/SettleUpModal';
+import GiveMoneyModal from '../components/GiveMoneyModal';
 
 export default function GroupDetailPage() {
     const { id } = useParams();
     const { user } = useAuth();
     const [group, setGroup] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('members');
     const [joinRequests, setJoinRequests] = useState([]);
     const [requestsLoading, setRequestsLoading] = useState(false);
@@ -18,6 +20,9 @@ export default function GroupDetailPage() {
     const [balances, setBalances] = useState(null);
     const [settlementsHistory, setSettlementsHistory] = useState([]);
     const [settleModalOpen, setSettleModalOpen] = useState(false);
+    const [giveMoneyModalOpen, setGiveMoneyModalOpen] = useState(false);
+    const [loans, setLoans] = useState([]);
+    const [loansLoading, setLoansLoading] = useState(false);
     const [historyLoading, setHistoryLoading] = useState(false);
     const navigate = useNavigate();
     const showToast = useToast();
@@ -34,10 +39,12 @@ export default function GroupDetailPage() {
 
     useEffect(() => {
         setLoading(true);
+        setError(null);
         api.get(`/api/groups/${id}`)
             .then(res => setGroup(res.data))
             .catch(err => {
                 console.error(err);
+                setError(err.response?.data?.detail || "Failed to load group details");
                 showToast('error', 'Error', 'Failed to load group details');
             })
             .finally(() => setLoading(false));
@@ -60,6 +67,13 @@ export default function GroupDetailPage() {
                 .then(res => setSettlementsHistory(res.data))
                 .catch(err => console.error(err))
                 .finally(() => setHistoryLoading(false));
+        }
+        if (activeTab === 'loans') {
+            setLoansLoading(true);
+            api.get(`/api/loans/${id}`)
+                .then(res => setLoans(res.data))
+                .catch(err => console.error(err))
+                .finally(() => setLoansLoading(false));
         }
     }, [activeTab, isAdmin, id]);
 
@@ -107,11 +121,24 @@ export default function GroupDetailPage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-text-muted">Loading group details...</div>;
-    if (!group) return <div className="p-8 text-text-muted">Group not found.</div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-text-muted">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent mb-4"></div>
+            <p className="text-sm font-medium italic">Gathering financials...</p>
+        </div>
+    );
+
+    if (error || !group) return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-bg-card border border-border rounded-[24px]">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h2 className="text-xl font-bold mb-2">Group not found</h2>
+            <p className="text-sm text-text-muted mb-6 max-w-[300px]">{error || "This group may have been deleted or you don't have access."}</p>
+            <Link to="/groups" className="px-5 py-2.5 bg-accent text-white rounded-[12px] font-semibold hover:opacity-90 transition">Back to Groups</Link>
+        </div>
+    );
 
     const memberCount = group.members?.length || 1;
-    const tabs = isAdmin ? ['members', 'expenses', 'requests', 'settlements'] : ['members', 'expenses', 'settlements'];
+    const tabs = isAdmin ? ['members', 'expenses', 'loans', 'requests', 'settlements'] : ['members', 'expenses', 'loans', 'settlements'];
 
     return (
         <div className="animate-fade-in">
@@ -147,6 +174,12 @@ export default function GroupDetailPage() {
                     )}
                     {group.is_active !== false && (
                         <>
+                            <button 
+                                onClick={() => setGiveMoneyModalOpen(true)}
+                                className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.3)] hover:bg-[rgba(245,158,11,0.2)] transition inline-flex items-center gap-2"
+                            >
+                                💰 Give Money
+                            </button>
                             <button 
                                 onClick={() => setSettleModalOpen(true)}
                                 className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-green-dim text-green border border-[rgba(34,197,94,0.3)] hover:bg-[rgba(34,197,94,0.2)] transition inline-flex items-center gap-2"
@@ -202,14 +235,14 @@ export default function GroupDetailPage() {
 
             {/* Tabs */}
             <div className="flex gap-1 bg-bg-card border border-border rounded-[14px] p-1 w-fit mb-7">
-                {tabs.map(t => (
-                    <button key={t} onClick={() => setActiveTab(t)} className={`px-5 py-2 rounded-[10px] text-sm font-semibold transition capitalize ${activeTab === t ? 'bg-accent text-white' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
-                        {t === 'expenses' ? '📋' : t === 'members' ? '👥' : t === 'requests' ? '📩' : '⚡'} {t}
-                        {t === 'requests' && joinRequests.length > 0 && (
-                            <span className="ml-1.5 bg-red text-white text-[0.65rem] font-bold px-[6px] py-[1px] rounded-full">{joinRequests.length}</span>
-                        )}
-                    </button>
-                ))}
+                    {tabs.map(t => (
+                        <button key={t} onClick={() => setActiveTab(t)} className={`px-5 py-2 rounded-[10px] text-sm font-semibold transition capitalize ${activeTab === t ? 'bg-accent text-white' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
+                            {t === 'expenses' ? '📋' : t === 'members' ? '👥' : t === 'requests' ? '📩' : t === 'loans' ? '💰' : '⚡'} {t}
+                            {t === 'requests' && joinRequests.length > 0 && (
+                                <span className="ml-1.5 bg-red text-white text-[0.65rem] font-bold px-[6px] py-[1px] rounded-full">{joinRequests.length}</span>
+                            )}
+                        </button>
+                    ))}
             </div>
 
             {/* Tab Content: Members */}
@@ -374,6 +407,62 @@ export default function GroupDetailPage() {
                 group={group}
                 suggestedSettlements={balances?.suggested_settlements?.filter(s => s.from_user === user?.id) || []}
                 onSettled={fetchBalances}
+            />
+
+            {/* Loans Tab Content */}
+            {activeTab === 'loans' && (
+                <div className="bg-bg-card border border-border rounded-[20px] p-6 animate-fade-in">
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-border">
+                        <div>
+                            <div className="text-sm font-bold">Loan History</div>
+                            <div className="text-xs text-text-muted mt-0.5">Money given to the group admin</div>
+                        </div>
+                        {group.is_active !== false && (
+                            <button
+                                onClick={() => setGiveMoneyModalOpen(true)}
+                                className="px-4 py-2 rounded-[10px] text-xs font-bold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.2)] hover:bg-[rgba(245,158,11,0.2)] transition flex items-center gap-2"
+                            >
+                                💰 Give Money
+                            </button>
+                        )}
+                    </div>
+                    {loansLoading ? (
+                        <div className="text-sm text-text-muted py-4">Loading loans...</div>
+                    ) : loans.length === 0 ? (
+                        <div className="text-sm text-text-muted py-4 text-center">No loans yet. Use "Give Money" to lend to the admin.</div>
+                    ) : (
+                        loans.map(loan => (
+                            <div key={loan.id} className="flex items-center gap-3.5 py-4 border-b border-border last:border-b-0">
+                                <div className="w-10 h-10 rounded-full bg-yellow/10 flex items-center justify-center text-yellow text-sm">💰</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-semibold truncate">
+                                        <span className="text-accent-light">{loan.from_user_name}</span> gave <span className="text-accent-light">{loan.to_user_name}</span>
+                                    </div>
+                                    <div className="text-xs text-text-muted mt-1">
+                                        {loan.note && <span className="italic">"{loan.note}" • </span>}
+                                        {new Date(loan.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                    </div>
+                                </div>
+                                <div className="text-sm font-extrabold text-yellow">₹{loan.amount}</div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            <GiveMoneyModal
+                open={giveMoneyModalOpen}
+                onClose={() => setGiveMoneyModalOpen(false)}
+                group={group}
+                onSuccess={() => {
+                    fetchBalances();
+                    // Refresh loans if on loans tab
+                    if (activeTab === 'loans') {
+                        api.get(`/api/loans/${id}`)
+                            .then(res => setLoans(res.data))
+                            .catch(err => console.error(err));
+                    }
+                }}
             />
         </div>
     );

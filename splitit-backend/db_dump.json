@@ -1,0 +1,122 @@
+{
+  "users": [
+    {
+      "id": "070e4502-b520-4c63-b2f2-0e872ada656d",
+      "full_name": "Muhammad Hadhi"
+    },
+    {
+      "id": "c0d56aea-e3a5-42eb-96e5-a18810aa9ff3",
+      "full_name": "Mu Hadhi"
+    },
+    {
+      "id": "0b47843f-a00d-4bc7-ba92-c32f36199d29",
+      "full_name": "muhammad hadhi"
+    },
+    {
+      "id": "8a852921-b614-47cf-baac-7aba4490e8dd",
+      "full_name": "hadhi"
+    },
+    {
+      "id": "327a89bf-6523-4058-88d4-a29400f5d698",
+      "full_name": "Lio Messi"
+    },
+    {
+      "id": "a682214b-3b72-43bf-8ad9-a67bb290ac11",
+      "full_name": "ARJUN C S"
+    },
+    {
+      "id": "e38ecd82-9855-4edd-a939-128d83c7eebe",
+      "full_name": "RIHAN M"
+    },
+    {
+      "id": "6dd86174-a984-4992-bf7b-897f3f3f445d",
+      "full_name": "Test Subagent"
+    }
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "name": "cs03"
+    },
+    {
+      "id": 2,
+      "name": "Wayanad Trip"
+    },
+    {
+      "id": 3,
+      "name": "Integration Test Group"
+    },
+    {
+      "id": 4,
+      "name": "Test Group"
+    },
+    {
+      "id": 5,
+      "name": "CS03-1"
+    }
+  ],
+  "members": [
+    {
+      "group_id": 1,
+      "user_id": "8a852921-b614-47cf-baac-7aba4490e8dd",
+      "role": "admin"
+    },
+    {
+      "group_id": 1,
+      "user_id": "327a89bf-6523-4058-88d4-a29400f5d698",
+      "role": "member"
+    },
+    {
+      "group_id": 1,
+      "user_id": "a682214b-3b72-43bf-8ad9-a67bb290ac11",
+      "role": "member"
+    },
+    {
+      "group_id": 2,
+      "user_id": "a682214b-3b72-43bf-8ad9-a67bb290ac11",
+      "role": "admin"
+    },
+    {
+      "group_id": 2,
+      "user_id": "e38ecd82-9855-4edd-a939-128d83c7eebe",
+      "role": "member"
+    },
+    {
+      "group_id": 2,
+      "user_id": "8a852921-b614-47cf-baac-7aba4490e8dd",
+      "role": "member"
+    },
+    {
+      "group_id": 3,
+      "user_id": "6dd86174-a984-4992-bf7b-897f3f3f445d",
+      "role": "admin"
+    },
+    {
+      "group_id": 4,
+      "user_id": "6dd86174-a984-4992-bf7b-897f3f3f445d",
+      "role": "admin"
+    },
+    {
+      "group_id": 5,
+      "user_id": "a682214b-3b72-43bf-8ad9-a67bb290ac11",
+      "role": "admin"
+    }
+  ],
+  "expenses": [
+    {
+      "id": 1,
+      "group_id": 1,
+      "paid_by": "327a89bf-6523-4058-88d4-a29400f5d698"
+    },
+    {
+      "id": 2,
+      "group_id": 1,
+      "paid_by": "8a852921-b614-47cf-baac-7aba4490e8dd"
+    },
+    {
+      "id": 3,
+      "group_id": 1,
+      "paid_by": "a682214b-3b72-43bf-8ad9-a67bb290ac11"
+    }
+  ]
+}
