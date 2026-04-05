@@ -6,3 +6,5 @@ pydantic
 pydantic-settings
 python-jose
 urllib3
+PyJWT
+
