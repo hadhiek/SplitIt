@@ -94,7 +94,7 @@ export default function ExpensesPage() {
                                 <tr key={e.id} className="border-b border-border last:border-b-0 hover:bg-white/[0.02] transition">
                                     <td className="px-5 py-3.5 text-sm">
                                         <div className="flex items-center gap-2.5">
-                                            <span className="text-lg">{e.category === 'Food' ? '🍔' : e.category === 'Transport' ? '🚕' : '📦'}</span>
+                                            <span className="text-lg">{e.category === 'Food & Dining' ? <img src="../../logo/pizza.png"/> : e.category === 'Transport' ? <img src="../../logo/transportation.png"/> : e.category === 'Health' ? <img src="../../logo/health.png"/>: e.category === 'Accomodation' ? <img src="../../logo/accomodation.png"/>: e.category === 'Entertainment' ? <img src="../../logo/entertainment.png"/>: e.category === 'Shopping' ? <img src="../../logo/shopping.png"/>: e.category === 'Bill' ? <img src="../../logo/bill.png"/> : <img src="../../logo/box.png"/>}</span>
                                             <strong>{e.description}</strong>
                                         </div>
                                     </td>

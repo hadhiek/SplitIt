@@ -28,7 +28,7 @@ export default function GiveMoneyModal({ open, onClose, group, onSuccess }) {
                 amount: amt,
                 note: note.trim() || null
             });
-            showToast('success', 'Money Given! 💰', `₹${amt} given to ${adminName}. This is now reflected in balances.`);
+            showToast('success', 'Money Given! ', `₹${amt} given to ${adminName}. This is now reflected in balances.`);
             onSuccess();
             onClose();
             setAmount('');
@@ -45,7 +45,7 @@ export default function GiveMoneyModal({ open, onClose, group, onSuccess }) {
             <div className="bg-bg-card border border-border rounded-[24px] p-8 w-full max-w-[480px] animate-[scaleIn_0.25s_cubic-bezier(0.4,0,0.2,1)] shadow-2xl">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <div className="text-xl font-bold tracking-tight">💰 Give Money</div>
+                        <div className="flex gap-2 text-xl font-bold tracking-tight"><img src="../../logo/loan.png"/> Give Money</div>
                         <p className="text-xs text-text-muted mt-1 uppercase tracking-widest font-semibold">{group.name}</p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-white/10 transition">×</button>

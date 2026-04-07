@@ -25,6 +25,11 @@
   --color-text-muted: #475569;
 }
 
+@font-face {
+  font-family: 'Street Look';
+  src: url('fonts/StreetLook-MAmBp.ttf') format('truetype');
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -37,7 +42,8 @@
   }
 
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: "Google Sans Flex",sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight:200;
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
@@ -55,6 +61,14 @@
   button {
     cursor: pointer;
     font-family: inherit;
+  }
+  .splititTitle{
+    font-size: 64px;
+    font-family: 'Nanum Pen Script';
+  }
+  .splititTitle-in{
+    font-size: 40px;
+    font-family: 'Nanum Pen Script';
   }
 
   input,

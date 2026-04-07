@@ -120,12 +120,12 @@ export default function AddExpensePage() {
     };
 
     const splitTypes = [
-        { key: 'equal', icon: '⚖️', label: 'Equal', desc: 'Split evenly' },
-        { key: 'custom', icon: '✏️', label: 'Custom', desc: 'Set amounts' },
-        { key: 'percent', icon: '%', label: 'Percentage', desc: 'By ratio' },
+        { key: 'equal', icon: <img src="../../logo/equal.png"/>, label: 'Equal', desc: 'Split evenly' },
+        { key: 'custom', icon: <img src="../../logo/custom.png"/>, label: 'Custom', desc: 'Set amounts' },
+        { key: 'percent', icon: <img src="../../logo/percent.png"/>, label: 'Percentage', desc: 'By ratio' },
     ];
 
-    const categories = ['Food & Dining', 'Accommodation', 'Transport', 'Entertainment', 'Shopping', 'Health', 'Other'];
+    const categories = ['Food & Dining', 'Accommodation', 'Transport', 'Entertainment', 'Shopping', 'Health', 'Bill', 'Other'];
 
     return (
         <div className="animate-fade-in">
@@ -194,13 +194,13 @@ export default function AddExpensePage() {
                         <div className="text-[0.95rem] font-semibold mb-4">Receipt / Proof</div>
                         <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
                             <input type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                            <div className="text-4xl mb-4">{fileName ? '✅' : '📎'}</div>
+                            <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src="../../logo/tick.png"/> : <img src="../../logo/link.png"/>}</div>
                             <div className="text-[0.95rem] font-semibold mb-1.5">{fileName || 'Drag & drop receipt here'}</div>
                             <div className="text-xs text-text-muted">{fileName || 'or click to browse · PNG, JPG, PDF up to 10MB'}</div>
                         </div>
                         {fileName && (
                             <div className="mt-3 flex items-center gap-2.5 bg-green-dim border border-[rgba(34,197,94,0.3)] rounded-[10px] px-3.5 py-2.5">
-                                <span>📄</span>
+                                <span><img src="../../logo/bill.png"/></span>
                                 <span className="text-sm flex-1 truncate">{fileName}</span>
                                 <span className="text-green text-xs">✓ Ready</span>
                             </div>
@@ -216,7 +216,7 @@ export default function AddExpensePage() {
                         <div className="flex gap-3">
                             {splitTypes.map(s => (
                                 <button key={s.key} onClick={() => setSplitType(s.key)} className={`flex-1 p-4 rounded-[14px] text-center transition border ${splitType === s.key ? 'border-accent bg-accent-dim' : 'border-border bg-bg-card hover:border-[rgba(99,102,241,0.3)]'}`}>
-                                    <div className="text-2xl mb-2">{s.icon}</div>
+                                    <div className="flex items-center justify-center text-2xl mb-2">{s.icon}</div>
                                     <div className="text-xs font-semibold">{s.label}</div>
                                     <div className="text-[0.75rem] text-text-muted mt-1">{s.desc}</div>
                                 </button>

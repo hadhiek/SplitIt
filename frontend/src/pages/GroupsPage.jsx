@@ -3,15 +3,26 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from '../components/ToastProvider';
 
+const iconMap = {
+    vacation: "../../logo/vacation.png",
+    accomodation: "../../logo/accomodation.png",
+    football: "../../logo/football.png",
+    food: "../../logo/food.png",
+    transportation: "../../logo/transportation.png",
+    group: "../../logo/group.png"
+};
+
 function GroupCard({ group, onClick }) {
     const avatarColors = ['#6366f1', '#22c55e', '#3b82f6', '#f59e0b'];
     const membersCount = group.members_count || 1; 
     const balance = group.user_balance || 0;
 
+    const groupIcon = group.emoji || iconMap.group;
+
     return (
         <div onClick={onClick} className="bg-bg-card border border-border rounded-[20px] p-6 cursor-pointer hover:-translate-y-[3px] hover:border-[rgba(99,102,241,0.3)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-all relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-20 h-20 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.1),transparent)]" />
-            <div className="text-4xl mb-4">{group.emoji || '👥'}</div>
+            <div className="text-4xl mb-4"><img src={groupIcon}/></div>
             <div className="text-base font-bold mb-1.5">{group.name}</div>
             <div className="text-xs text-text-secondary mb-[18px] truncate">{group.description || 'No description'}</div>
             <div className="flex items-center justify-between">
@@ -39,10 +50,11 @@ function GroupCard({ group, onClick }) {
 function CreateGroupModal({ open, onClose, onCreated }) {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
-    const [emoji, setEmoji] = useState('👥');
+    const [emoji, setEmoji] = useState(iconMap['group']);
     const [loading, setLoading] = useState(false);
     const showToast = useToast();
-    const emojis = ['🏖', '🏠', '🎓', '💼', '🎉', '🍕', '⚽', '🚗', '👥'];
+
+    const emojis = ['vacation', 'accomodation', 'football', 'food', 'transportation', 'group'];
 
     if (!open) return null;
 
@@ -53,12 +65,12 @@ function CreateGroupModal({ open, onClose, onCreated }) {
             const res = await api.post('/api/groups', {
                 name,
                 description: desc,
-                emoji
+                emoji: emoji
             });
             showToast('success', 'Group Created!', `"${name}" created. Invite code: ${res.data.invite_code}`);
             onCreated(res.data);
             onClose();
-            setName(''); setDesc(''); setEmoji('👥');
+            setName(''); setDesc(''); setEmoji(iconMap['group']);
         } catch(e) {
             showToast('error', 'Failed', 'Could not create group.');
         } finally {
@@ -85,7 +97,7 @@ function CreateGroupModal({ open, onClose, onCreated }) {
                     <label className="block text-sm text-text-secondary font-medium mb-2">Pick an Emoji</label>
                     <div className="flex gap-2 flex-wrap mt-2">
                         {emojis.map(e => (
-                            <span key={e} onClick={() => setEmoji(e)} className={`text-2xl cursor-pointer p-1 px-2 rounded-md transition ${emoji === e ? 'bg-accent-dim ring-1 ring-accent' : 'hover:bg-white/10'}`}>{e}</span>
+                            <span key={e} onClick={() => setEmoji(iconMap[e])} className={`text-2xl cursor-pointer p-1 px-2 rounded-md transition ${emoji === iconMap[e] ? 'bg-accent-dim ring-1 ring-accent' : 'hover:bg-white/10'}`}><img src={iconMap[e]}/></span>
                         ))}
                     </div>
                 </div>
@@ -184,8 +196,8 @@ export default function GroupsPage() {
                     <p className="text-text-secondary text-sm mt-1">{activeGroups.length} active groups</p>
                 </div>
                 <div className="flex gap-2.5">
-                    <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">🔗 Join Group</button>
-                    <button onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition">+ Create Group</button>
+                    <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"><img src="../../logo/link.png"/> Join Group</button>
+                    <button onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition"><img src="../../logo/accomodation.png"/>Create Group</button>
                 </div>
             </div>
 

@@ -60,7 +60,7 @@ export default function GlobalSettlementsPage() {
 
             <div className="grid grid-cols-3 gap-5 mb-10">
                 <SummaryCard 
-                    icon="📤" 
+                    icon="../../logo/you_owe.png"
                     iconBg="rgba(239,68,68,0.12)" 
                     label="Total to Pay" 
                     value={`₹${totalToPay}`} 
@@ -69,7 +69,7 @@ export default function GlobalSettlementsPage() {
                     change={{ text: 'Urgent' }}
                 />
                 <SummaryCard 
-                    icon="📥" 
+                    icon="../../logo/owed.png"
                     iconBg="rgba(34,197,94,0.12)" 
                     label="Total to Receive" 
                     value={`₹${totalToReceive}`} 
@@ -78,7 +78,7 @@ export default function GlobalSettlementsPage() {
                     change={{ up: true, text: 'Expected' }}
                 />
                 <SummaryCard 
-                    icon="👥" 
+                    icon="../../logo/group.png" 
                     iconBg="rgba(99,102,241,0.15)" 
                     label="Active Groups" 
                     value={activeGroups} 

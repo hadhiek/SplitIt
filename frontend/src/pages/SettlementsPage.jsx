@@ -83,9 +83,9 @@ export default function SettlementsPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-5 mb-8">
-                <SummaryCard icon="💸" iconBg="rgba(99,102,241,0.15)" label="Total Group Debt" value={`₹${totalToSettle}`} colorClass="purple" change={{ text: 'To be cleared' }} />
-                <SummaryCard icon="🔄" iconBg="rgba(245,158,11,0.12)" label="Required Transfers" value={optimizedSettlements.length} colorClass="yellow" change={{ text: 'Simplified' }} />
-                <SummaryCard icon="👥" iconBg="rgba(34,197,94,0.12)" label="Active Members" value={group?.members?.length || 0} colorClass="green" change={{ text: 'Participants' }} />
+                <SummaryCard icon="../../logo/accomodation.png" iconBg="rgba(99,102,241,0.15)" label="Total Group Debt" value={`₹${totalToSettle}`} colorClass="purple" change={{ text: 'To be cleared' }} />
+                <SummaryCard icon="../../logo/custom.png" iconBg="rgba(245,158,11,0.12)" label="Required Transfers" value={optimizedSettlements.length} colorClass="yellow" change={{ text: 'Simplified' }} />
+                <SummaryCard icon="../../logo/group.png" iconBg="rgba(34,197,94,0.12)" label="Active Members" value={group?.members?.length || 0} colorClass="green" change={{ text: 'Participants' }} />
             </div>
 
             {/* Flow Graph - Real Data */}
@@ -121,7 +121,7 @@ export default function SettlementsPage() {
                 
                 {optimizedSettlements.length === 0 ? (
                     <div className="bg-bg-card border border-border rounded-[20px] p-12 text-center">
-                        <div className="text-4xl mb-4">🏆</div>
+                        <div className="text-4xl mb-4"><img src="../../logo/trophy.png" /></div>
                         <div className="text-lg font-bold">Everyone is settled!</div>
                         <p className="text-sm text-text-muted mt-1">No debts outstanding in this group.</p>
                     </div>

@@ -10,7 +10,7 @@ export function SummaryCard({ icon, iconBg, label, value, change, colorClass = '
     return (
         <div className="bg-bg-card border border-border rounded-[20px] p-6 relative overflow-hidden hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-all group">
             <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${topColors[colorClass] || topColors.purple}`} />
-            <div className={`w-11 h-11 rounded-[10px] flex items-center justify-center text-xl mb-4`} style={{ background: iconBg }}>{icon}</div>
+            <div className={`w-11 h-11 rounded-[10px] flex items-center justify-center text-xl mb-4`} style={{ background: iconBg }}><img src={icon} /></div>
             <div className="text-xs text-text-muted font-medium uppercase tracking-wide mb-2">{label}</div>
             <div className={`text-[1.8rem] font-extrabold tracking-tight mb-2 ${valueClass}`}>{value}</div>
             {change && <div className={`text-xs flex items-center gap-1 ${change.up ? 'text-green' : change.down ? 'text-red' : 'text-text-muted'}`}>{change.text}</div>}

@@ -5,10 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 const navItems = [
     {
         section: 'Main', items: [
-            { to: '/', icon: '🏠', label: 'Dashboard' },
-            { to: '/groups', icon: '👥', label: 'Groups' },
-            { to: '/expenses', icon: '🧾', label: 'Expenses' },
-            { to: '/settlements', icon: '💸', label: 'Settlements' },
+            { to: '/', icon: <img src="../../logo/dashboard.png"/>, label: 'Dashboard' },
+            { to: '/groups', icon: <img src="../../logo/group.png"/>, label: 'Groups' },
+            { to: '/expenses', icon: <img src="../../logo/you_owe.png"/>, label: 'Expenses' },
+            { to: '/settlements', icon: <img src="../../logo/settlement.png"/>, label: 'Settlements' },
         ]
     }
 ];
@@ -31,8 +31,10 @@ export default function Sidebar() {
         <aside className="w-60 bg-bg-sidebar border-r border-border fixed top-0 left-0 bottom-0 flex flex-col z-[100]">
             {/* Logo */}
             <div className="px-5 py-4 pb-3.5 border-b border-border flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-light rounded-[10px] flex items-center justify-center text-base">✂</div>
-                <span className="text-xl font-extrabold tracking-tight">SplitIt</span>
+                <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
+                    <img className="w-10 h-10" src="../../logo/logo.png" />
+                </div>
+                <span className="text-xl font-extrabold" class='splititTitle-in'>Split It</span>
             </div>
 
             {/* Navigation */}

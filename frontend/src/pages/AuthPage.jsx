@@ -60,8 +60,10 @@ export default function AuthPage() {
                 <div className="absolute bottom-[-100px] left-[-100px] w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(96,165,250,0.15)_0%,transparent_70%)]" />
 
                 <div className="flex items-center gap-2.5 text-white">
-                    <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-light rounded-[10px] flex items-center justify-center text-base">✂</div>
-                    <span className="text-xl font-extrabold">SplitIt</span>
+                    <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
+                        <img className="w-10 h-10" src="../../logo/logo.png" />
+                    </div>
+                    <span className="text-xl font-extrabold" class='splititTitle'>Split It</span>
                 </div>
 
                 <div className="relative z-[1] mt-10">
@@ -76,22 +78,17 @@ export default function AuthPage() {
                         ))}
                     </div>
                 </div>
-
-                <div className="relative z-[1] bg-white/5 border border-border rounded-[14px] p-5">
-                    <p className="italic text-text-secondary text-sm mb-3">"SplitIt saved our trip planning. No more messy spreadsheets or awkward 'who paid what' conversations."</p>
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-semibold">RK</div>
-                        <span className="text-sm font-medium">Rohan K. — Bangalore Tech Trip 2026</span>
-                    </div>
-                </div>
+                <p className="italic text-text-secondary text-base font-bold">"Split bills, not bonds"</p>
             </div>
 
             {/* Right Panel */}
             <div className="flex items-center justify-center p-10">
                 <div className="w-full max-w-[440px]">
                     <div className="flex items-center gap-2.5 mb-8">
-                        <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-light rounded-[10px] flex items-center justify-center text-base">✂</div>
-                        <span className="text-xl font-extrabold">SplitIt</span>
+                        <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
+                        <img className="w-10 h-10" src="../../logo/logo.png" />
+                        </div>
+                        <span className="text-xl font-extrabold" class='splititTitle'>Split It</span>
                     </div>
 
                     {/* Tabs */}

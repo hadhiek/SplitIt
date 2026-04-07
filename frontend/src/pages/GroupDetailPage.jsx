@@ -130,7 +130,7 @@ export default function GroupDetailPage() {
 
     if (error || !group) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 bg-bg-card border border-border rounded-[24px]">
-            <div className="text-4xl mb-4">⚠️</div>
+            <div className="text-4xl mb-4"><img src="../../logo/warning.png"/></div>
             <h2 className="text-xl font-bold mb-2">Group not found</h2>
             <p className="text-sm text-text-muted mb-6 max-w-[300px]">{error || "This group may have been deleted or you don't have access."}</p>
             <Link to="/groups" className="px-5 py-2.5 bg-accent text-white rounded-[12px] font-semibold hover:opacity-90 transition">Back to Groups</Link>
@@ -143,18 +143,19 @@ export default function GroupDetailPage() {
     return (
         <div className="animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center gap-3 justify-between mb-7">
                 <div className="flex items-center gap-3">
                     <Link to="/groups" className="inline-flex items-center px-2.5 py-2.5 rounded-[10px] text-text-secondary hover:bg-white/5 hover:text-text-primary transition">←</Link>
                     <div>
                         <div className="flex items-center gap-4">
-                            <h1 className="text-2xl font-bold">{group.emoji || '👥'} {group.name}</h1>
+                            <h1 className="flex items-center gap-2 text-2xl font-bold">{<img className='object-contain' src={group.emoji} /> || <img className='object-contain' src="../../logo/group.png"/>} {group.name}</h1>
                             {isAdmin && group.invite_code && (
-                                <div className="flex items-center gap-2 bg-accent-dim border border-[rgba(99,102,241,0.3)] rounded-[8px] px-3 py-1 mt-1">
-                                    <span className="text-[0.65rem] text-accent-light font-semibold uppercase tracking-wider opacity-80 mt-[1px]">Invite Code:</span>
-                                    <span className="font-mono font-bold text-sm tracking-widest text-accent-light">{group.invite_code}</span>
-                                    <button onClick={handleCopyCode} className="ml-1 text-accent-light opacity-60 hover:opacity-100 transition text-sm" title="Copy Code">
-                                        {codeCopied ? '✓' : '📋'}
+                                <div className="flex items-center justify-center bg-accent-dim border border-[rgba(99,102,241,0.3)] rounded-[8px] px-3 py-1 mt-1">
+                                    <span className="text-[12px] whitespace-nowrap text-accent-light font-semibold uppercase tracking-wider opacity-80 px-3">Invite Code:
+                                        <span className="block font-mono font-bold text-sm tracking-widest text-accent-light">{group.invite_code}</span>
+                                    </span>
+                                    <button onClick={handleCopyCode} className="ml-1 flex-shrink-0 text-accent-light opacity-60 hover:opacity-100 transition text-sm px-3" title="Copy Code">
+                                        {codeCopied ? <img src="../../logo/tick.png"/> : <img src="../../logo/bill.png"/>}
                                     </button>
                                 </div>
                             )}
@@ -163,30 +164,27 @@ export default function GroupDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-2.5">
-                    <button className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">⚙ Settings</button>
+                    <button className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"> <img src="../../logo/settings.png"/> Settings</button>
                     {isAdmin && group.is_active !== false && (
                         <button 
                             onClick={handleDeleteGroup}
-                            className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-red-dim text-red border border-[rgba(239,68,68,0.2)] hover:bg-[rgba(239,68,68,0.3)] transition inline-flex items-center gap-2"
-                        >
-                            🗑 Delete
+                            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-red-dim text-red border border-[rgba(239,68,68,0.2)] hover:bg-[rgba(239,68,68,0.3)] transition">
+                            <img src="../../logo/delete.png"/> Delete
                         </button>
                     )}
                     {group.is_active !== false && (
                         <>
                             <button 
                                 onClick={() => setGiveMoneyModalOpen(true)}
-                                className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.3)] hover:bg-[rgba(245,158,11,0.2)] transition inline-flex items-center gap-2"
-                            >
-                                💰 Give Money
+                                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.3)] hover:bg-[rgba(245,158,11,0.2)] transition">
+                                <img src="../../logo/you_owe.png"/> Loan
                             </button>
                             <button 
                                 onClick={() => setSettleModalOpen(true)}
-                                className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-green-dim text-green border border-[rgba(34,197,94,0.3)] hover:bg-[rgba(34,197,94,0.2)] transition inline-flex items-center gap-2"
-                            >
-                                ₹ Settle Up
+                                className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-green-dim text-green border border-[rgba(34,197,94,0.3)] hover:bg-[rgba(34,197,94,0.2)] transition">
+                                <img src="../../logo/settlement.png"/> Settle
                             </button>
-                            <Link to="/add-expense" className="px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition inline-flex items-center gap-2">+ Add Expense</Link>
+                            <Link to="/add-expense" className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition"><img src="../../logo/add.png"/> Add Expense</Link>
                         </>
                     )}
                 </div>
@@ -197,7 +195,7 @@ export default function GroupDetailPage() {
             {/* Inactive Banner */}
             {group.is_active === false && (
                 <div className="bg-bg-card border border-red/30 rounded-[14px] px-6 py-4 mb-6 flex items-center gap-4 text-red border-dashed">
-                    <span className="text-2xl">📜</span>
+                    <span className="text-2xl"><img src="../../logo/bill.png"/></span>
                     <div>
                         <div className="font-bold">This group is inactive</div>
                         <div className="text-xs opacity-70">This group has been deleted and is now in read-only history mode. No new expenses can be added.</div>
@@ -237,7 +235,7 @@ export default function GroupDetailPage() {
             <div className="flex gap-1 bg-bg-card border border-border rounded-[14px] p-1 w-fit mb-7">
                     {tabs.map(t => (
                         <button key={t} onClick={() => setActiveTab(t)} className={`px-5 py-2 rounded-[10px] text-sm font-semibold transition capitalize ${activeTab === t ? 'bg-accent text-white' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
-                            {t === 'expenses' ? '📋' : t === 'members' ? '👥' : t === 'requests' ? '📩' : t === 'loans' ? '💰' : '⚡'} {t}
+                            {t === 'expenses' ? <img src="../../logo/bill.png"/> : t === 'members' ? <img src="../../logo/group.png"/> : t === 'requests' ? <img src="../../logo/request.png"/> : t === 'loans' ? <img src="../../logo/loan.png"/> : <img src="../../logo/settlement.png"/>} <div className='mt-3'>{t}</div>
                             {t === 'requests' && joinRequests.length > 0 && (
                                 <span className="ml-1.5 bg-red text-white text-[0.65rem] font-bold px-[6px] py-[1px] rounded-full">{joinRequests.length}</span>
                             )}
@@ -273,8 +271,8 @@ export default function GroupDetailPage() {
             {activeTab === 'expenses' && (
                 <div className="overflow-x-auto rounded-[20px] bg-bg-card border border-border animate-fade-in shadow-sm">
                     {group.expenses?.length === 0 ? (
-                        <div className="p-12 text-center text-text-muted">
-                            <div className="text-3xl mb-3">🧾</div>
+                        <div className="flex flex-col items-center justify-center p-12 text-text-muted">
+                            <div className="text-3xl mb-3"><img src="../../logo/bill.png"/></div>
                             <div className="text-sm font-semibold text-text-secondary">No expenses yet.</div>
                             <p className="text-xs mt-1">Get started by adding your first cost!</p>
                         </div>
@@ -299,7 +297,7 @@ export default function GroupDetailPage() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <span className="w-8 h-8 rounded-lg bg-bg-secondary flex items-center justify-center text-sm shadow-inner">
-                                                        {e.category === 'Food' ? '🍔' : e.category === 'Transport' ? '🚕' : '📦'}
+                                                        {e.category === 'Food & Dining' ? <img src="../../logo/pizza.png"/> : e.category === 'Transport' ? <img src="../../logo/transportation.png"/> : e.category === 'Health' ? <img src="../../logo/health.png"/>: e.category === 'Accomodation' ? <img src="../../logo/accomodation.png"/>: e.category === 'Entertainment' ? <img src="../../logo/entertainment.png"/>: e.category === 'Shopping' ? <img src="../../logo/shopping.png"/>: e.category === 'Bill' ? <img src="../../logo/bill.png"/> : <img src="../../logo/box.png"/>}
                                                     </span>
                                                     <span className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors">{e.description}</span>
                                                 </div>
@@ -420,9 +418,8 @@ export default function GroupDetailPage() {
                         {group.is_active !== false && (
                             <button
                                 onClick={() => setGiveMoneyModalOpen(true)}
-                                className="px-4 py-2 rounded-[10px] text-xs font-bold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.2)] hover:bg-[rgba(245,158,11,0.2)] transition flex items-center gap-2"
-                            >
-                                💰 Give Money
+                                className="px-4 py-2 rounded-[10px] text-xs font-bold bg-yellow-dim text-yellow border border-[rgba(245,158,11,0.2)] hover:bg-[rgba(245,158,11,0.2)] transition flex items-center gap-2">
+                                <img src="../../logo/loan.png"/> Give Money
                             </button>
                         )}
                     </div>
@@ -433,7 +430,7 @@ export default function GroupDetailPage() {
                     ) : (
                         loans.map(loan => (
                             <div key={loan.id} className="flex items-center gap-3.5 py-4 border-b border-border last:border-b-0">
-                                <div className="w-10 h-10 rounded-full bg-yellow/10 flex items-center justify-center text-yellow text-sm">💰</div>
+                                <div className="w-10 h-10 rounded-full bg-yellow/10 flex items-center justify-center text-yellow text-sm"><img src="../../logo/loan.png"/></div>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-semibold truncate">
                                         <span className="text-accent-light">{loan.from_user_name}</span> gave <span className="text-accent-light">{loan.to_user_name}</span>
