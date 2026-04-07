@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastProvider';
 import { supabase } from '../lib/supabase';
+import logo from "../../logo/logo.png"
 
 export default function AuthPage() {
     const [tab, setTab] = useState('login');
@@ -61,7 +62,7 @@ export default function AuthPage() {
 
                 <div className="flex items-center gap-2.5 text-white">
                     <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
-                        <img className="w-10 h-10" src="../../logo/logo.png" />
+                        <img className="w-10 h-10" src={logo} />
                     </div>
                     <span className="text-xl font-extrabold" class='splititTitle'>Split It</span>
                 </div>
@@ -86,7 +87,7 @@ export default function AuthPage() {
                 <div className="w-full max-w-[440px]">
                     <div className="flex items-center gap-2.5 mb-8">
                         <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
-                        <img className="w-10 h-10" src="../../logo/logo.png" />
+                        <img className="w-10 h-10" src={logo} />
                         </div>
                         <span className="text-xl font-extrabold" class='splititTitle'>Split It</span>
                     </div>
