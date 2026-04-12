@@ -2,9 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const files = [
-    'src/pages/GroupDetailPage.jsx',
-    'src/pages/ExpensesPage.jsx',
-    'src/pages/AddExpensePage.jsx'
+    'src/components/GiveMoneyModal.jsx',
+    'src/components/Sidebar.jsx'
 ];
 
 function camelCase(str) {

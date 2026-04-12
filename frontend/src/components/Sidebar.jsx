@@ -1,14 +1,20 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import dashboard from "../../logo/dashboard.png";
+import groupIcon from "../../logo/group.png";
+import youOwe from "../../logo/you_owe.png";
+import settlement from "../../logo/settlement.png";
+import logo from "../../logo/logo.png";
+
 
 const navItems = [
     {
         section: 'Main', items: [
-            { to: '/', icon: <img src="../../logo/dashboard.png"/>, label: 'Dashboard' },
-            { to: '/groups', icon: <img src="../../logo/group.png"/>, label: 'Groups' },
-            { to: '/expenses', icon: <img src="../../logo/you_owe.png"/>, label: 'Expenses' },
-            { to: '/settlements', icon: <img src="../../logo/settlement.png"/>, label: 'Settlements' },
+            { to: '/', icon: <img src={dashboard}/>, label: 'Dashboard' },
+            { to: '/groups', icon: <img src={groupIcon}/>, label: 'Groups' },
+            { to: '/expenses', icon: <img src={youOwe}/>, label: 'Expenses' },
+            { to: '/settlements', icon: <img src={settlement}/>, label: 'Settlements' },
         ]
     }
 ];
@@ -32,7 +38,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="px-5 py-4 pb-3.5 border-b border-border flex items-center gap-2.5">
                 <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
-                    <img className="w-10 h-10" src="../../logo/logo.png" />
+                    <img className="w-10 h-10" src={logo} />
                 </div>
                 <span className="text-xl font-extrabold" class='splititTitle-in'>Split It</span>
             </div>
