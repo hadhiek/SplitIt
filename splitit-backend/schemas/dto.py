@@ -104,6 +104,7 @@ class JoinRequestAction(BaseModel):
 # --- Settlements ---
 class SettlementCreate(BaseModel):
     group_id: int
+    from_user: UUID
     to_user: UUID
     amount: float
     payment_method: Optional[str] = "cash"

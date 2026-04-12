@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { SummaryCard, Avatar } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SettlementsPage() {
+    const { user } = useAuth();
     const { id } = useParams();
     const navigate = useNavigate();
     const showToast = useToast();
@@ -13,6 +15,7 @@ export default function SettlementsPage() {
     const [group, setGroup] = useState(null);
     const [optimizedSettlements, setOptimizedSettlements] = useState([]);
     const [markingId, setMarkingId] = useState(null);
+    const [shakeId, setShakeId] = useState(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -36,10 +39,18 @@ export default function SettlementsPage() {
     }, [id]);
 
     const handleMarkPaid = async (s) => {
+        if (user?.id !== s.to_user) {
+            setShakeId(s.from_user + s.to_user);
+            showToast('error', 'Unauthorized Action', 'Only the person receiving the payment can approve it.');
+            setTimeout(() => setShakeId(null), 500);
+            return;
+        }
+        
         setMarkingId(s.from_user + s.to_user);
         try {
             await api.post('/api/settlements', {
                 group_id: parseInt(id),
+                from_user: s.from_user,
                 to_user: s.to_user,
                 amount: s.amount,
                 payment_method: 'cash'
@@ -126,8 +137,10 @@ export default function SettlementsPage() {
                         <p className="text-sm text-text-muted mt-1">No debts outstanding in this group.</p>
                     </div>
                 ) : (
-                    optimizedSettlements.map((s, idx) => (
-                        <div key={idx} className="flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] hover:border-accent/30 hover:scale-[1.01] transition-all duration-300">
+                    optimizedSettlements.map((s, idx) => {
+                        const isShaking = shakeId === (s.from_user + s.to_user);
+                        return (
+                        <div key={idx} className={`flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] transition-all duration-300 ${isShaking ? 'animate-shake border-red/50 bg-red-dim/5' : 'hover:border-accent/30 hover:scale-[1.01]'}`}>
                             <div className="flex -space-x-3">
                                 <Avatar initials={s.from_user_name.substring(0,2).toUpperCase()} color="#6366f1" size={44} />
                                 <Avatar initials={s.to_user_name.substring(0,2).toUpperCase()} color="#3b82f6" size={44} />
@@ -155,7 +168,7 @@ export default function SettlementsPage() {
                                 <button onClick={() => showToast('info', 'Reminder', `Payment reminder sent to ${s.from_user_name}!`)} className="px-4 py-2.5 rounded-[12px] text-xs font-bold text-text-secondary bg-transparent border border-border hover:bg-white/5 transition">Remind</button>
                             </div>
                         </div>
-                    ))
+                    )})
                 )}
             </div>
 

@@ -24,7 +24,13 @@ async def record_settlement(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
-    sender_uuid = uuid.UUID(user_id)
+    current_user_uuid = uuid.UUID(user_id)
+    
+    # Only the person who receives the money can approve this settlement.
+    if current_user_uuid != settlement_in.to_user:
+        raise HTTPException(status_code=403, detail="Only the person who is owed can approve settlements.")
+
+    sender_uuid = settlement_in.from_user
     recipient_uuid = settlement_in.to_user
     
     # Verify sender is in the group
@@ -49,14 +55,14 @@ async def record_settlement(
     
     db.add(new_settlement)
 
-    # Notify the recipient
-    sender_res = await db.execute(select(User).where(User.id == sender_uuid))
-    sender = sender_res.scalars().first()
-    sender_name = sender.full_name if sender else "Someone"
+    # Notify the sender that the recipient received/approved it
+    recipient_res = await db.execute(select(User).where(User.id == recipient_uuid))
+    recipient = recipient_res.scalars().first()
+    recipient_name = recipient.full_name if recipient else "Someone"
     
     notification = Notification(
-        user_id=recipient_uuid,
-        message=f"{sender_name} settled ₹{settlement_in.amount} with you.",
+        user_id=sender_uuid,
+        message=f"{recipient_name} confirmed your payment of ₹{settlement_in.amount}.",
         type="success"
     )
     db.add(notification)
