@@ -19,6 +19,7 @@ import approval from "../../logo/approval.png"
 import tick from "../../logo/tick.png"
 import add from "../../logo/add.png"
 import linker from "../../logo/link.png"
+import bills from "../../logo/bill.png"
 
 // Helper for date formatting
 function formatDate(dateStr) {
