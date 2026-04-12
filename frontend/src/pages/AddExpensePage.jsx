@@ -3,6 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import equal from "../../logo/equal.png";
+import custom from "../../logo/custom.png";
+import percent from "../../logo/percent.png";
+import tick from "../../logo/tick.png";
+import link from "../../logo/link.png";
+import bill from "../../logo/bill.png";
+
 
 export default function AddExpensePage() {
     const { user } = useAuth();
@@ -155,9 +162,9 @@ export default function AddExpensePage() {
     };
 
     const splitTypes = [
-        { key: 'equal', icon: <img src="../../logo/equal.png"/>, label: 'Equal', desc: 'Split evenly' },
-        { key: 'custom', icon: <img src="../../logo/custom.png"/>, label: 'Custom', desc: 'Set amounts' },
-        { key: 'percent', icon: <img src="../../logo/percent.png"/>, label: 'Percentage', desc: 'By ratio' },
+        { key: 'equal', icon: <img src={equal}/>, label: 'Equal', desc: 'Split evenly' },
+        { key: 'custom', icon: <img src={custom}/>, label: 'Custom', desc: 'Set amounts' },
+        { key: 'percent', icon: <img src={percent}/>, label: 'Percentage', desc: 'By ratio' },
     ];
 
     const categories = ['Food & Dining', 'Accommodation', 'Transport', 'Entertainment', 'Shopping', 'Health', 'Bill', 'Other'];
@@ -229,13 +236,13 @@ export default function AddExpensePage() {
                         <div className="text-[0.95rem] font-semibold mb-4">Receipt / Proof</div>
                         <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
                             <input type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                            <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src="../../logo/tick.png"/> : <img src="../../logo/link.png"/>}</div>
+                            <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src={tick}/> : <img src={link}/>}</div>
                             <div className="text-[0.95rem] font-semibold mb-1.5">{fileName || 'Drag & drop receipt here'}</div>
                             <div className="text-xs text-text-muted">{fileName || 'or click to browse · PNG, JPG, PDF up to 10MB'}</div>
                         </div>
                         {fileName && (
                             <div className="mt-3 flex items-center gap-2.5 bg-green-dim border border-[rgba(34,197,94,0.3)] rounded-[10px] px-3.5 py-2.5">
-                                <span><img src="../../logo/bill.png"/></span>
+                                <span><img src={bill}/></span>
                                 <span className="text-sm flex-1 truncate">{fileName}</span>
                                 <span className="text-green text-xs">✓ Ready</span>
                             </div>

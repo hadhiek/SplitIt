@@ -4,6 +4,15 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
+import pizza from "../../logo/pizza.png";
+import transportation from "../../logo/transportation.png";
+import health from "../../logo/health.png";
+import accomodation from "../../logo/accomodation.png";
+import entertainment from "../../logo/entertainment.png";
+import shopping from "../../logo/shopping.png";
+import bill from "../../logo/bill.png";
+import box from "../../logo/box.png";
+
 
 export default function ExpensesPage() {
     const { user } = useAuth();
@@ -94,7 +103,7 @@ export default function ExpensesPage() {
                                 <tr key={e.id} className="border-b border-border last:border-b-0 hover:bg-white/[0.02] transition">
                                     <td className="px-5 py-3.5 text-sm">
                                         <div className="flex items-center gap-2.5">
-                                            <span className="text-lg">{e.category === 'Food & Dining' ? <img src="../../logo/pizza.png"/> : e.category === 'Transport' ? <img src="../../logo/transportation.png"/> : e.category === 'Health' ? <img src="../../logo/health.png"/>: e.category === 'Accomodation' ? <img src="../../logo/accomodation.png"/>: e.category === 'Entertainment' ? <img src="../../logo/entertainment.png"/>: e.category === 'Shopping' ? <img src="../../logo/shopping.png"/>: e.category === 'Bill' ? <img src="../../logo/bill.png"/> : <img src="../../logo/box.png"/>}</span>
+                                            <span className="text-lg">{e.category === 'Food & Dining' ? <img src={pizza}/> : e.category === 'Transport' ? <img src={transportation}/> : e.category === 'Health' ? <img src={health}/>: e.category === 'Accomodation' ? <img src={accomodation}/>: e.category === 'Entertainment' ? <img src={entertainment}/>: e.category === 'Shopping' ? <img src={shopping}/>: e.category === 'Bill' ? <img src={bill}/> : <img src={box}/>}</span>
                                             <strong>{e.description}</strong>
                                         </div>
                                     </td>
