@@ -51,6 +51,8 @@ export default function AddExpensePage() {
                     id: m.user_id,
                     name: m.user?.full_name || m.user?.email || 'Unknown',
                     selected: true,
+                    customAmount: '',
+                    percentage: '',
                 }));
                 setParticipants(initialParts);
                 
@@ -67,6 +69,10 @@ export default function AddExpensePage() {
 
     const toggleParticipant = (idx) => {
         setParticipants(prev => prev.map((p, i) => i === idx ? { ...p, selected: !p.selected } : p));
+    };
+
+    const updateParticipantValue = (idx, field, value) => {
+        setParticipants(prev => prev.map((p, i) => i === idx ? { ...p, [field]: value } : p));
     };
 
     const selectAll = () => setParticipants(prev => prev.map(p => ({ ...p, selected: true })));
@@ -93,10 +99,39 @@ export default function AddExpensePage() {
             return;
         }
 
-        const splits = selected.map(p => ({
-            user_id: p.id,
-            amount_owed: amt / selected.length
-        }));
+        let splits = [];
+        if (splitType === 'equal') {
+            splits = selected.map(p => ({
+                user_id: p.id,
+                amount_owed: amt / selected.length
+            }));
+        } else if (splitType === 'custom') {
+            const sumCustom = selected.reduce((sum, p) => sum + (parseFloat(p.customAmount) || 0), 0);
+            if (Math.abs(sumCustom - amt) > 0.01) {
+                showToast('error', 'Split Mismatch', `Custom amounts sum to ₹${sumCustom.toFixed(2)}, but total is ₹${amt.toFixed(2)}`);
+                return;
+            }
+            splits = selected.map(p => ({
+                user_id: p.id,
+                amount_owed: parseFloat(p.customAmount) || 0
+            }));
+        } else if (splitType === 'percent') {
+            const sumPercent = selected.reduce((sum, p) => sum + (parseFloat(p.percentage) || 0), 0);
+            if (Math.abs(sumPercent - 100) > 0.01) {
+                showToast('error', 'Split Mismatch', `Percentages sum to ${sumPercent.toFixed(1)}%, but must be 100%`);
+                return;
+            }
+            splits = selected.map(p => ({
+                user_id: p.id,
+                amount_owed: ((parseFloat(p.percentage) || 0) / 100) * amt
+            }));
+            
+            // Adjust for rounding issues so it exactly matches
+            const totalAssigned = splits.reduce((sum, s) => sum + s.amount_owed, 0);
+            if (Math.abs(totalAssigned - amt) > 0.001 && splits.length > 0) {
+                splits[0].amount_owed += (amt - totalAssigned);
+            }
+        }
 
         setLoading(true);
         try {
@@ -211,8 +246,8 @@ export default function AddExpensePage() {
                 {/* Right Column */}
                 <div className="flex flex-col gap-6">
                     {/* Split Type */}
-                    <div className="bg-bg-card border border-border rounded-[20px] p-6 opacity-60 pointer-events-none">
-                        <div className="text-[0.95rem] font-semibold mb-4">Split Method (Only Equal Available Temporarily)</div>
+                    <div className="bg-bg-card border border-border rounded-[20px] p-6">
+                        <div className="text-[0.95rem] font-semibold mb-4">Split Method</div>
                         <div className="flex gap-3">
                             {splitTypes.map(s => (
                                 <button key={s.key} onClick={() => setSplitType(s.key)} className={`flex-1 p-4 rounded-[14px] text-center transition border ${splitType === s.key ? 'border-accent bg-accent-dim' : 'border-border bg-bg-card hover:border-[rgba(99,102,241,0.3)]'}`}>
@@ -235,11 +270,37 @@ export default function AddExpensePage() {
                             {participants.map((p, i) => {
                                 const initials = p.name ? p.name.substring(0,2).toUpperCase() : '??';
                                 return (
-                                <div key={p.id} onClick={() => toggleParticipant(i)} className={`flex items-center gap-3 px-4 py-3 rounded-[10px] border cursor-pointer transition ${p.selected ? 'border-accent bg-accent-dim' : 'border-border hover:border-[rgba(99,102,241,0.3)]'}`}>
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-blue-500">{initials}</div>
-                                    <div className="flex-1 text-sm font-medium">{p.name} {p.id === user?.id ? '(You)' : ''}</div>
-                                    <div className="text-sm text-text-muted">{p.selected && perPerson > 0 ? `₹${perPerson}` : ''}</div>
-                                    <div className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center transition text-xs ${p.selected ? 'bg-accent border-accent text-white' : 'border-border'}`}>{p.selected ? '✓' : ''}</div>
+                                <div key={p.id} className={`flex items-center gap-3 px-4 py-3 rounded-[10px] border transition ${p.selected ? 'border-accent bg-accent-dim' : 'border-border hover:border-[rgba(99,102,241,0.3)]'}`}>
+                                    <div onClick={() => toggleParticipant(i)} className="flex items-center gap-3 flex-1 cursor-pointer">
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-blue-500">{initials}</div>
+                                        <div className="text-sm font-medium">{p.name} {p.id === user?.id ? '(You)' : ''}</div>
+                                    </div>
+                                    
+                                    {splitType === 'equal' && (
+                                        <div className="text-sm text-text-muted">{p.selected && perPerson > 0 ? `₹${perPerson}` : ''}</div>
+                                    )}
+                                    {splitType === 'custom' && p.selected && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-sm text-text-muted">₹</span>
+                                            <input type="number" 
+                                                   value={p.customAmount} 
+                                                   onChange={e => updateParticipantValue(i, 'customAmount', e.target.value)} 
+                                                   className="w-20 bg-transparent border-b border-border px-1 py-1 text-sm text-text-primary outline-none focus:border-accent" 
+                                                   placeholder="0" />
+                                        </div>
+                                    )}
+                                    {splitType === 'percent' && p.selected && (
+                                        <div className="flex items-center gap-1">
+                                            <input type="number" 
+                                                   value={p.percentage} 
+                                                   onChange={e => updateParticipantValue(i, 'percentage', e.target.value)} 
+                                                   className="w-16 bg-transparent border-b border-border px-1 py-1 text-sm text-text-primary outline-none focus:border-accent text-right"
+                                                   placeholder="0" />
+                                            <span className="text-sm text-text-muted">%</span>
+                                        </div>
+                                    )}
+
+                                    <div onClick={() => toggleParticipant(i)} className={`w-5 h-5 shrink-0 cursor-pointer rounded-[6px] border-2 flex items-center justify-center transition text-xs ${p.selected ? 'bg-accent border-accent text-white' : 'border-border'}`}>{p.selected ? '✓' : ''}</div>
                                 </div>
                             )})}
                         </div>
