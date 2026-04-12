@@ -4,6 +4,21 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { SummaryCard, StatusBadge } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
+import pizza from "../../logo/pizza.png"
+import accomodation from "../../logo/accomodation.png"
+import health from "../../logo/health.png"
+import transport from "../../logo/transportation.png"
+import entertainment from "../../logo/entertainment.png"
+import shopping from "../../logo/shopping.png"
+import box from "../../logo/box.png"
+import hand from "../../logo/hand.png"
+import group from "../../logo/group.png"
+import you_owe from "../../logo/you_owe.png"
+import owed from "../../logo/owed.png"
+import approval from "../../logo/approval.png"
+import tick from "../../logo/tick.png"
+import add from "../../logo/add.png"
+import linker from "../../logo/link.png"
 
 // Helper for date formatting
 function formatDate(dateStr) {
@@ -115,14 +130,14 @@ export default function DashboardPage() {
 
     // Category mapping for icons
     const catIcons = {
-        'Food & Dining': <img src="../../logo/pizza.png"/>,
-        'Accomadation': <img src="../../logo/accomodation.png"/>,
-        'Health': <img src="../../logo/health.png"/>,
-        'Transport': <img src="../../logo/transportation.png"/>,
-        'Shopping': <img src="../../logo/shopping.png"/>,
-        'Entertainment': <img src="../../logo/entertainment.png"/>,
-        'Bills': <img src="../../logo/bill.png"/>,
-        'Other': <img src="../../logo/box.png"/>
+        'Food & Dining': <img src={pizza}/>,
+        'Accomadation': <img src={accomodation}/>,
+        'Health': <img src={health}/>,
+        'Transport': <img src={transport}/>,
+        'Shopping': <img src={shopping}/>,
+        'Entertainment': <img src={entertainment}/>,
+        'Bills': <img src={bills}/>,
+        'Other': <img src={box}/>
     };
 
     return (
@@ -130,7 +145,7 @@ export default function DashboardPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-7">
                 <div>
-                    <h1 className="flex items-center text-2xl font-bold tracking-tight">Good evening, {displayName}<img className='ml-3' src="../../logo/hand.png"></img></h1>
+                    <h1 className="flex items-center text-2xl font-bold tracking-tight">Good evening, {displayName}<img className='ml-3' src={hand}></img></h1>
                     <p className="text-text-secondary text-sm mt-1">Here's your financial overview for today</p>
                 </div>
                 <div className="flex gap-2.5">
@@ -154,7 +169,7 @@ export default function DashboardPage() {
             {/* Summary Cards */}
             <div className="grid grid-cols-4 gap-5 mb-8">
                 <SummaryCard 
-                    icon="../../logo/group.png"
+                    icon={group}
                     iconBg="rgba(99,102,241,0.15)" 
                     label="Active Groups" 
                     value={summary?.groups_count || 0} 
@@ -162,7 +177,7 @@ export default function DashboardPage() {
                     change={{ text: 'Syncing live' }} 
                 />
                 <SummaryCard 
-                    icon="../../logo/you_owe.png" 
+                    icon={you_owe} 
                     iconBg="rgba(239,68,68,0.12)" 
                     label="You Owe" 
                     value={`₹${summary?.total_owe || 0}`} 
@@ -171,7 +186,7 @@ export default function DashboardPage() {
                     change={{ text: 'To be settled' }} 
                 />
                 <SummaryCard 
-                    icon="../../logo/owed.png"
+                    icon={owed}
                     iconBg="rgba(34,197,94,0.12)" 
                     label="You Are Owed" 
                     value={`₹${summary?.total_owed || 0}`} 
@@ -180,7 +195,7 @@ export default function DashboardPage() {
                     change={{ up: true, text: 'Expected back' }} 
                 />
                 <SummaryCard 
-                    icon="../../logo/approval.png"
+                    icon={approval}
                     iconBg="rgba(59,130,246,0.12)" 
                     label="Approvals" 
                     value={summary?.pending_approvals_count || 0} 
@@ -202,14 +217,14 @@ export default function DashboardPage() {
                     </div>
                     {recent.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
-                            <div className="text-3xl mb-2"><img src="../../logo/you_owe.png" /></div> {/*no payment */}
+                            <div className="text-3xl mb-2"><img src={you_owe} /></div> {/*no payment */}
                             <div className="text-sm">No expenses yet.</div>
                         </div>
                     )}
                     {recent.map(e => (
                         <div key={e.id} onClick={() => window.location.href=`/groups/${e.group_id}`} className="flex items-center gap-4 py-3.5 border-b border-border last:border-b-0 hover:bg-white/[0.02] transition cursor-pointer">
                             <div className="w-10 h-10 rounded-[10px] bg-[rgba(99,102,241,0.1)] flex items-center justify-center text-lg shrink-0">
-                                {catIcons[e.category] || <img src="../../logo/box.png"/>}
+                                {catIcons[e.category] || <img src={box}/>}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-semibold truncate">{e.description}</div>
@@ -239,7 +254,7 @@ export default function DashboardPage() {
                     </div>
                     {summary?.pending_approvals_count === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
-                            <div className="text-3xl mb-2"><img src="../../logo/tick.png"/></div>
+                            <div className="text-3xl mb-2"><img src={tick}/></div>
                             <div className="text-sm">All caught up!</div>
                         </div>
                     ) : (
@@ -260,8 +275,8 @@ export default function DashboardPage() {
                 <h3 className="text-base font-bold mb-4">Quick Actions</h3>
                 <div className="flex gap-2.5 flex-wrap">
                     {[
-                        { icon: <img src="../../logo/add.png"/>, label: 'Add Expense', action: () => window.location.href = '/add-expense' },
-                        { icon: <img src="../../logo/link.png"/>, label: 'Create Group', action: () => window.location.href = '/groups' },
+                        { icon: <img src={add}/>, label: 'Add Expense', action: () => window.location.href = '/add-expense' },
+                        { icon: <img src={linker}/>, label: 'Create Group', action: () => window.location.href = '/groups' },
                         { icon: '🔗', label: 'Join Group', action: () => setJoinModalOpen(true) },
                     ].map(a => (
                         <button key={a.label} onClick={a.action} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">
