@@ -6,6 +6,7 @@ import uuid
 
 from core.database import get_db
 from core.security import get_current_user_id
+from core.cache import invalidate_group_cache
 from models.domain import Loan, GroupMember, User, Notification
 from schemas.dto import LoanCreate, LoanOut
 
@@ -72,6 +73,9 @@ async def create_loan(
 
     await db.commit()
     await db.refresh(new_loan)
+
+    # Invalidate cache for everyone in this group
+    await invalidate_group_cache(loan_in.group_id, db)
 
     # 6. Fetch admin name for response
     admin_res = await db.execute(select(User).where(User.id == receiver_uuid))

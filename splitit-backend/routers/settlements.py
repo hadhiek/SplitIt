@@ -15,6 +15,7 @@ from schemas.dto import (
 )
 
 from schemas.dto import GlobalSettlementsOut, GroupSuggestedSettlements
+from core.cache import get_cache, set_cache, invalidate_group_cache
 
 router = APIRouter(prefix="/api/settlements", tags=["settlements"])
 
@@ -69,6 +70,10 @@ async def record_settlement(
 
     await db.commit()
     await db.refresh(new_settlement)
+    
+    # Invalidate cache for everyone in this group
+    await invalidate_group_cache(settlement_in.group_id, db)
+    
     return new_settlement
 
 @router.get("/balances/{group_id}", response_model=GroupBalancesOut)
@@ -79,6 +84,12 @@ async def get_group_balances(
 ):
     current_user_uuid = uuid.UUID(user_id)
     
+    # Check cache first
+    cache_key = f"balances:group:{group_id}:user:{current_user_uuid}"
+    cached_data = await get_cache(cache_key)
+    if cached_data:
+        return GroupBalancesOut(**cached_data)
+        
     # Use subqueries for each balance component per user in the group
     user_paid_sq = (
         select(sqlfunc.coalesce(sqlfunc.sum(Expense.amount), 0))
@@ -211,7 +222,7 @@ async def get_group_balances(
         if debtors[0][0] < 0.01: debtors.pop(0)
         if creditors[0][0] < 0.01: creditors.pop(0)
 
-    return GroupBalancesOut(
+    result_data = GroupBalancesOut(
         total_spent=round(total_spent, 2),
         user_paid=round(user_paid_val, 2),
         user_share=round(user_share_val, 2),
@@ -219,6 +230,11 @@ async def get_group_balances(
         members_balances=members_balances,
         suggested_settlements=suggested
     )
+    
+    # Store in cache
+    await set_cache(cache_key, result_data.model_dump())
+    
+    return result_data
 
 @router.get("/history/{group_id}", response_model=List[SettlementDetailOut])
 async def get_settlement_history(

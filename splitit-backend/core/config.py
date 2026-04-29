@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     # Database URL
     DATABASE_URL: str = ""
 
+    # Redis URL (default for local development)
+    REDIS_URL: str = "redis://localhost:6379/0"
+
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings()
+

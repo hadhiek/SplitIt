@@ -1,10 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from core.config import settings
+from core.cache import init_redis, close_redis
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_redis()
+    yield
+    # Shutdown
+    await close_redis()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="Backend API for the SplitIt Expense Management Dashboard"
+    description="Backend API for the SplitIt Expense Management Dashboard",
+    lifespan=lifespan
 )
 
 # CORS configuration - Permissive for local development. Bearer tokens work with wildcard.

@@ -7,6 +7,7 @@ import uuid
 
 from core.database import get_db
 from core.security import get_current_user_id
+from core.cache import invalidate_group_cache
 from models.domain import Expense, ExpenseSplit, GroupMember, Group
 from schemas.dto import ExpenseCreate, ExpenseOut
 
@@ -56,6 +57,9 @@ async def create_expense(
         db.add(split)
         
     await db.commit()
+    
+    # Invalidate cache for everyone in this group
+    await invalidate_group_cache(expense_in.group_id, db)
     
     # Reload with splits and group info
     result = await db.execute(
