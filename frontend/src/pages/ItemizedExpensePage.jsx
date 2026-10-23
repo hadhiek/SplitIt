@@ -251,6 +251,10 @@ export default function ItemizedExpensePage() {
       showToast('error', 'Unassigned item', 'Assign every item to at least one selected participant.');
       return;
     }
+    if (discountCents > itemSubtotalCents + taxCents) {
+      showToast('error', 'Discount is too large', 'The discount cannot exceed the items subtotal plus tax/service charge.');
+      return;
+    }
     if (totalCents <= 0) {
       showToast('error', 'Invalid total', 'The final total must be greater than zero.');
       return;
