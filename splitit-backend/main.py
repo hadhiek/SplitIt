@@ -1,6 +1,10 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import logging
+import uuid
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from core.config import settings
 from core.cache import init_redis, close_redis
 
@@ -27,15 +31,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-import traceback
-from fastapi.responses import JSONResponse
-from fastapi import FastAPI, Request
+logger = logging.getLogger(__name__)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    print(f"GLOBAL 500 ERROR: {request.url}")
-    traceback.print_exc()
-    return JSONResponse(status_code=500, content={"detail": f"Internal Server Error: {str(exc)}"})
+    # Keep exception details in server logs only; never expose them to API clients.
+    request_id = str(uuid.uuid4())
+    logger.exception(
+        "Unhandled exception request_id=%s method=%s path=%s",
+        request_id,
+        request.method,
+        request.url.path,
+        exc_info=exc,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "An unexpected server error occurred.",
+            "request_id": request_id,
+        },
+    )
 
 @app.get("/")
 async def root():
