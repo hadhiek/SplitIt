@@ -176,6 +176,7 @@ export default function AddExpensePage() {
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Add New Expense</h1>
                     <p className="text-text-secondary text-sm mt-1">Fill in the details below to log a shared expense</p>
+                    <Link to="/add-expense/itemized" className="inline-block mt-2 text-sm font-semibold text-accent hover:underline">Split by individual items →</Link>
                 </div>
             </div>
 

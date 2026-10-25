@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func as sqlfunc
 import uuid
+import math
 from typing import List
 
 from core.database import get_db
@@ -33,16 +34,24 @@ async def record_settlement(
 
     sender_uuid = settlement_in.from_user
     recipient_uuid = settlement_in.to_user
-    
-    # Verify sender is in the group
+
+    if sender_uuid == recipient_uuid:
+        raise HTTPException(status_code=400, detail="Sender and recipient must be different group members")
+    if not math.isfinite(settlement_in.amount) or settlement_in.amount <= 0:
+        raise HTTPException(status_code=400, detail="Settlement amount must be a positive finite number")
+
+    # Both the sender and recipient must be members of the specified group.
     member_check = await db.execute(
-        select(GroupMember).where(
+        select(GroupMember.user_id).where(
             GroupMember.group_id == settlement_in.group_id,
-            GroupMember.user_id == sender_uuid
+            GroupMember.user_id.in_([sender_uuid, recipient_uuid]),
         )
     )
-    if not member_check.scalars().first():
-        raise HTTPException(status_code=403, detail="Not a member of this group")
+    group_member_ids = set(member_check.scalars().all())
+    if sender_uuid not in group_member_ids:
+        raise HTTPException(status_code=403, detail="Sender is not a member of this group")
+    if recipient_uuid not in group_member_ids:
+        raise HTTPException(status_code=400, detail="Recipient is not a member of this group")
 
     # Insert a new settlement record
     new_settlement = Settlement(

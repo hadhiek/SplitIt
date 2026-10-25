@@ -12,6 +12,7 @@ import GroupsPage from './pages/GroupsPage';
 import GroupDetailPage from './pages/GroupDetailPage';
 import ExpensesPage from './pages/ExpensesPage';
 import AddExpensePage from './pages/AddExpensePage';
+import ItemizedExpensePage from './pages/ItemizedExpensePage';
 import SettlementsPage from './pages/SettlementsPage';
 import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
 
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="/settlements" element={<GlobalSettlementsPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/add-expense" element={<AddExpensePage />} />
+              <Route path="/add-expense/itemized" element={<ItemizedExpensePage />} />
             </Route>
           </Routes>
         </BrowserRouter>
