@@ -170,7 +170,6 @@ export default function ItemizedExpensePage() {
       formData.append('file', receiptFile);
       setOcrProgress(25);
       const response = await api.post('/api/receipts/extract', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 120000,
       });
       setOcrProgress(100);
@@ -250,7 +249,7 @@ export default function ItemizedExpensePage() {
         expense_date: date,
         splits,
       });
-      showToast('success', 'Expense submitted', `${money(total)} split by items and saved. The receipt image was not uploaded or stored.`);
+      showToast('success', 'Expense submitted', `${money(total)} split by items and saved. The receipt image was processed temporarily and was not retained.`);
       navigate('/expenses');
     } catch (error) {
       showToast('error', 'Could not create expense', error.response?.data?.detail || 'Please try again.');
@@ -280,7 +279,7 @@ export default function ItemizedExpensePage() {
             <div className="border-2 border-dashed border-border rounded-xl p-5">
               <label className="block text-sm font-medium mb-2">Choose a receipt image</label>
               <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleReceipt(event.target.files?.[0])} className="block w-full text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-2 file:text-white" />
-              <p className="text-xs text-text-muted mt-3">The image is sent to SplitIt’s temporary OCR endpoint for in-memory processing only. It is not saved to disk, storage, or a database, and OCR results are returned only to this form.</p>
+              <p className="text-xs text-text-muted mt-3">The image is sent to SplitIt’s temporary OCR endpoint. It is processed for this request only; neither the image nor OCR results are retained in storage or a database.</p>
               {receiptPreview && <img src={receiptPreview} alt="Selected receipt preview" className="mt-4 max-h-64 max-w-full rounded-lg border border-border object-contain" />}
               {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
