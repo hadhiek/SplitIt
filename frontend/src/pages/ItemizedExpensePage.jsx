@@ -24,44 +24,6 @@ function allocateCents(totalCents, weightedPeople) {
   return Object.fromEntries(portions.map((part) => [part.id, part.cents]));
 }
 
-function parseReceiptText(text) {
-  const ignored = /^(sub\s?total|subtotal|total|tax|gst|cgst|sgst|vat|discount|change|cash|card|upi|balance|round\s?off|thank you|invoice|receipt|date|time|qty|quantity|price|amount)\b/i;
-  const rows = [];
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.replace(/\s+/g, ' ').trim();
-    if (!line || ignored.test(line)) continue;
-    const match = line.match(/^(.+?)\s+(?:₹|Rs\.?|INR\s*)?([0-9]+(?:[.,][0-9]{1,2})?)\s*$/i);
-    if (!match) continue;
-    const name = match[1].replace(/[|*•]+/g, '').trim();
-    const price = Number(match[2].replace(',', '.'));
-    if (!name || !Number.isFinite(price) || price <= 0 || /\b(total|tax|gst|discount|subtotal)\b/i.test(name)) continue;
-    rows.push({ name, quantity: 1, unitPrice: price });
-  }
-  return rows.slice(0, 60);
-}
-
-async function getTesseract() {
-  if (window.Tesseract) return window.Tesseract;
-  await new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-splitit-tesseract]');
-    if (existing) {
-      existing.addEventListener('load', resolve, { once: true });
-      existing.addEventListener('error', reject, { once: true });
-      if (window.Tesseract) resolve();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
-    script.async = true;
-    script.dataset.splititTesseract = 'true';
-    script.onload = resolve;
-    script.onerror = () => reject(new Error('Could not load the browser OCR engine.'));
-    document.head.appendChild(script);
-  });
-  if (!window.Tesseract) throw new Error('The OCR engine did not initialize.');
-  return window.Tesseract;
-}
-
 export default function ItemizedExpensePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -83,6 +45,7 @@ export default function ItemizedExpensePage() {
   const [receiptPreview, setReceiptPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrWarnings, setOcrWarnings] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -187,7 +150,7 @@ export default function ItemizedExpensePage() {
   const handleReceipt = (file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      showToast('error', 'Image required', 'For privacy, receipt OCR runs in your browser. Choose a JPG, PNG, or WEBP image.');
+      showToast('error', 'Image required', 'Choose a JPG, PNG, or WEBP image smaller than 10 MB.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -200,34 +163,42 @@ export default function ItemizedExpensePage() {
   const extractReceipt = async () => {
     if (!receiptFile) return;
     setOcrLoading(true);
-    setOcrProgress(0);
+    setOcrProgress(10);
+    setOcrWarnings([]);
     try {
-      const Tesseract = await getTesseract();
-      const result = await Tesseract.recognize(receiptFile, 'eng', {
-        logger: (event) => {
-          if (event.status === 'recognizing text' && event.progress != null) setOcrProgress(Math.round(event.progress * 100));
-        },
+      const formData = new FormData();
+      formData.append('file', receiptFile);
+      setOcrProgress(25);
+      const response = await api.post('/api/receipts/extract', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000,
       });
-      const text = result.data?.text || '';
-      const parsedItems = parseReceiptText(text);
-      const merchantGuess = text.split(/\r?\n/).map((line) => line.trim()).find((line) => line.length > 2 && line.length < 60);
+      setOcrProgress(100);
+      const data = response.data || {};
+      const parsedItems = (data.line_items || []).filter((item) => item.name && Number(item.unit_price) >= 0);
+      setOcrWarnings(data.warnings || []);
       if (parsedItems.length) {
         setItems(parsedItems.map((item, index) => ({
           id: Date.now() + index,
           name: item.name,
-          quantity: String(item.quantity),
-          unitPrice: String(item.unitPrice.toFixed(2)),
+          quantity: String(item.quantity || 1),
+          unitPrice: Number(item.unit_price || 0).toFixed(2),
           participantIds: selectedParticipants.map((person) => person.id),
         })));
         setNextItemId(Date.now() + parsedItems.length + 1);
-        setDescription((current) => current || (merchantGuess ? `Receipt - ${merchantGuess}` : 'Receipt expense'));
-        setMerchant((current) => current || merchantGuess || '');
-        showToast('success', 'Receipt scanned', `Found ${parsedItems.length} possible line items. Review every name and price before submitting.`);
+        if (data.tax != null) setTax(String(Number(data.tax).toFixed(2)));
+        if (data.discount != null) setDiscount(String(Number(data.discount).toFixed(2)));
+        if (data.merchant_name) {
+          setMerchant((current) => current || data.merchant_name);
+          setDescription((current) => current || `Receipt - ${data.merchant_name}`);
+        }
+        showToast('success', 'Receipt scanned', `Found ${parsedItems.length} possible line items. Review every item, quantity and price before saving.`);
       } else {
-        showToast('error', 'No line items detected', 'You can still enter the items manually below. Try a sharper, well-lit image.');
+        showToast('error', 'No line items detected', 'You can still enter the items manually. Try a sharper, well-lit image.');
       }
     } catch (error) {
-      showToast('error', 'Receipt scan failed', error.message || 'Please enter the items manually.');
+      const detail = error.response?.data?.detail;
+      showToast('error', 'Receipt scan failed', detail || error.message || 'Please enter the items manually.');
     } finally {
       setOcrLoading(false);
     }
@@ -309,8 +280,9 @@ export default function ItemizedExpensePage() {
             <div className="border-2 border-dashed border-border rounded-xl p-5">
               <label className="block text-sm font-medium mb-2">Choose a receipt image</label>
               <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleReceipt(event.target.files?.[0])} className="block w-full text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-2 file:text-white" />
-              <p className="text-xs text-text-muted mt-3">The image stays in this browser session. OCR is processed locally; neither the image nor OCR text is sent to SplitIt’s backend or saved.</p>
+              <p className="text-xs text-text-muted mt-3">The image is sent to SplitIt’s temporary OCR endpoint for in-memory processing only. It is not saved to disk, storage, or a database, and OCR results are returned only to this form.</p>
               {receiptPreview && <img src={receiptPreview} alt="Selected receipt preview" className="mt-4 max-h-64 max-w-full rounded-lg border border-border object-contain" />}
+              {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
                   {ocrLoading ? `Scanning… ${ocrProgress}%` : 'Extract items from receipt'}
@@ -429,7 +401,7 @@ export default function ItemizedExpensePage() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-text-muted mt-4">The saved receipt URL remains empty. Only the final expense total and per-person amounts are sent to the existing expense API.</p>
+            <p className="text-xs text-text-muted mt-4">The receipt image and extracted OCR data are temporary. Only the final expense total and per-person amounts are sent to the expense API.</p>
             <div className="flex gap-3 mt-5">
               <Link to="/expenses" className="flex-1 text-center px-4 py-3 rounded-lg border border-border text-sm font-semibold">Cancel</Link>
               <button type="button" disabled={loading || ocrLoading} onClick={submit} className="flex-[2] px-4 py-3 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">{loading ? 'Saving…' : 'Confirm & save expense'}</button>
