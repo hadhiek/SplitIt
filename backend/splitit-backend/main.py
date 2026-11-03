@@ -20,11 +20,12 @@ app.add_middleware(
 async def root():
     return {"message": "Welcome to SplitIt API. See /docs for endpoint documentation."}
 
-from routers import users, groups, expenses, settlements, notifications
+from routers import users, groups, expenses, settlements, notifications, receipt_extraction
 
 app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(expenses.router)
 app.include_router(settlements.router)
 app.include_router(notifications.router)
+app.include_router(receipt_extraction.router)
 
