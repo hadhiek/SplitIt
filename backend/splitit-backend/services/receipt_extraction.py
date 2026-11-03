@@ -119,11 +119,11 @@ def _parse_receipt(lines: list[str]) -> dict[str, Any]:
         money_match = MONEY_RE.search(normalized)
         value = _amount(money_match) if money_match else None
 
-        if value is not None and any(label in lower for label in TOTAL_LABELS):
-            total = value
-            continue
         if value is not None and any(label in lower for label in SUBTOTAL_LABELS):
             subtotal = value
+            continue
+        if value is not None and any(label in lower for label in TOTAL_LABELS):
+            total = value
             continue
         if value is not None and any(label in lower for label in TAX_LABELS):
             tax = (tax or 0.0) + value
