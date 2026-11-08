@@ -97,7 +97,7 @@ export default function SettlementsPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-5 mb-8">
+            <div className="settlement-summary-grid grid grid-cols-3 gap-5 mb-8">
                 <SummaryCard icon={accomodation} iconBg="rgba(99,102,241,0.15)" label="Total Group Debt" value={`₹${totalToSettle}`} colorClass="purple" change={{ text: 'To be cleared' }} />
                 <SummaryCard icon={custom} iconBg="rgba(245,158,11,0.12)" label="Required Transfers" value={optimizedSettlements.length} colorClass="yellow" change={{ text: 'Simplified' }} />
                 <SummaryCard icon={groupImg} iconBg="rgba(34,197,94,0.12)" label="Active Members" value={group?.members?.length || 0} colorClass="green" change={{ text: 'Participants' }} />
@@ -144,7 +144,7 @@ export default function SettlementsPage() {
                     optimizedSettlements.map((s, idx) => {
                         const isShaking = shakeId === (s.from_user + s.to_user);
                         return (
-                        <div key={idx} className={`flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] transition-all duration-300 ${isShaking ? 'animate-shake border-red/50 bg-red-dim/5' : 'hover:border-accent/30 hover:scale-[1.01]'}`}>
+                        <div key={idx} className={`settlement-row flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] transition-all duration-300 ${isShaking ? 'animate-shake border-red/50 bg-red-dim/5' : 'hover:border-accent/30 hover:scale-[1.01]'}`}>
                             <div className="flex -space-x-3">
                                 <Avatar initials={s.from_user_name.substring(0,2).toUpperCase()} color="#6366f1" size={44} />
                                 <Avatar initials={s.to_user_name.substring(0,2).toUpperCase()} color="#3b82f6" size={44} />
