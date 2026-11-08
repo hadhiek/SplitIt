@@ -319,7 +319,7 @@ def parse_receipt_lines(
     for index, line in enumerate(lines):
         amount = _last_amount(line)
         kind, priority = _summary_kind(line)
-        if kind == "tax" and re.search(r"\\btax\\s+invoice\\b", line, re.I):
+        if kind == "tax" and re.search(r"\btax\s+invoice\b", line, re.I):
             kind = None
         if amount is not None and kind == "subtotal":
             if amount >= 0:
