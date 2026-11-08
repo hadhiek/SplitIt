@@ -6,6 +6,8 @@ are never persisted by this service.
 from __future__ import annotations
 
 import io
+import logging
+import time
 from functools import lru_cache
 from threading import Lock
 from typing import Any
@@ -17,7 +19,10 @@ from rapidocr_onnxruntime import RapidOCR
 from services.receipt_parser import MAX_ITEMS, parse_receipt_lines
 
 
+logger = logging.getLogger(__name__)
+
 MAX_IMAGE_PIXELS = 25_000_000
+MAX_IMAGE_SIZE = (2000, 2800)
 _OCR_LOCK = Lock()
 
 
@@ -36,16 +41,9 @@ def _prepare_image(image_bytes: bytes) -> np.ndarray:
             if source.width * source.height > MAX_IMAGE_PIXELS:
                 raise ValueError("Image dimensions are too large. Choose a smaller image.")
             image = ImageOps.exif_transpose(source).convert("RGB")
-            image.thumbnail((2400, 3200), Image.Resampling.LANCZOS)
-
-            # Enlarge small thermal-print photos without aggressively stretching
-            # already large scans.
-            if min(image.size) < 1000:
-                scale = min(2.0, 1000 / max(min(image.size), 1))
-                image = image.resize(
-                    (max(1, int(image.width * scale)), max(1, int(image.height * scale))),
-                    Image.Resampling.LANCZOS,
-                )
+            # Bound the pixel count before OCR. Upscaling small phone images
+            # increases inference time without restoring detail that is not there.
+            image.thumbnail(MAX_IMAGE_SIZE, Image.Resampling.LANCZOS)
 
             image = ImageOps.grayscale(image)
             image = ImageEnhance.Contrast(image).enhance(1.5)
@@ -117,11 +115,26 @@ def _join_ocr_lines(results: list[Any]) -> tuple[list[str], list[float]]:
 
 def extract_receipt(image_bytes: bytes) -> dict[str, Any]:
     """Run OCR and return a reviewable, structured receipt draft."""
+    started = time.perf_counter()
     image = _prepare_image(image_bytes)
+    preprocessed_at = time.perf_counter()
     # The cached pipeline is shared within this worker. Serialize calls to avoid
     # mutable preprocessing state being shared across concurrent requests.
     with _OCR_LOCK:
-        result, elapsed = _ocr_engine()(image)
+        engine = _ocr_engine()
+        engine_ready_at = time.perf_counter()
+        result, elapsed = engine(image)
+    finished_at = time.perf_counter()
+    logger.info(
+        "Receipt OCR timings: dimensions=%sx%s preprocess=%.2fs model_ready=%.2fs "
+        "inference=%.2fs total=%.2fs",
+        image.shape[1],
+        image.shape[0],
+        preprocessed_at - started,
+        engine_ready_at - preprocessed_at,
+        finished_at - engine_ready_at,
+        finished_at - started,
+    )
     lines, confidences = _join_ocr_lines(result or [])
     if not lines:
         raise ValueError("No readable text found. Try a sharper, well-lit image.")
