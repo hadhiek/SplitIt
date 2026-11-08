@@ -23,7 +23,8 @@ MONEY_RE = re.compile(
     r"(?P<sign>[-−]?\s*)"
     r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)"
     r"(?:\s*/-)?"
-    r"(?![A-Za-z0-9])",
+    r"(?![A-Za-z0-9])"
+    r"(?!\\s*%)",
     re.IGNORECASE,
 )
 DATE_RE = re.compile(
@@ -225,7 +226,7 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
     # Detect the quantity immediately before the penultimate money value.
     if len(matches) >= 2:
         previous_match, previous_amount = matches[-2]
-        prefix = normalized[:previous_match[0].start()].rstrip()
+        prefix = normalized[:previous_match.start()].rstrip()
         qty_x = re.search(r"\b(\d{1,3})\s*[x×]\s*$", prefix, re.I)
         qty_plain = re.search(r"(?:^|\s)(\d{1,3})\s*$", prefix)
         if qty_x:
