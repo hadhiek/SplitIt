@@ -1,0 +1,29 @@
+name: Receipt parser tests
+
+on:
+  pull_request:
+    paths:
+      - "backend/splitit-backend/services/receipt_parser.py"
+      - "backend/splitit-backend/tests/**"
+      - ".github/workflows/receipt-parser-tests.yml"
+  push:
+    branches:
+      - feat/receipt-ocr-reliability
+    paths:
+      - "backend/splitit-backend/services/receipt_parser.py"
+      - "backend/splitit-backend/tests/**"
+      - ".github/workflows/receipt-parser-tests.yml"
+
+jobs:
+  parser-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/splitit-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run receipt parser unit tests
+        run: python -m unittest discover -s tests -v
