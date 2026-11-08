@@ -76,11 +76,11 @@ class ReceiptParserTests(unittest.TestCase):
                 "Tea 30.00",
                 "Subtotal 30.00",
                 "Tax 5.00",
-                "Grand Total 35.00",
+                "Grand Total 36.00",
             ],
             [0.9] * 5,
         )
-        self.assertEqual(result["total_amount"], 35.0)
+        self.assertEqual(result["total_amount"], 36.0)
         self.assertTrue(any("do not reconcile" in warning for warning in result["warnings"]))
 
     def test_no_items_returns_manual_entry_warning(self):
