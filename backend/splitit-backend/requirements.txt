@@ -6,3 +6,7 @@ pydantic
 pydantic-settings
 python-jose
 urllib3
+python-multipart
+Pillow
+numpy
+rapidocr-onnxruntime
