@@ -40,7 +40,7 @@ export default function Sidebar() {
                 <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
                     <img className="w-10 h-10" src={logo} />
                 </div>
-                <span className="text-xl font-extrabold" class='splititTitle-in'>Split It</span>
+                <span className="text-xl font-extrabold splititTitle-in">Split It</span>
             </div>
 
             {/* Navigation */}

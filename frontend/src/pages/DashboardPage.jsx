@@ -157,12 +157,12 @@ export default function DashboardPage() {
     return (
         <div className="animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between mb-7">
+            <div className="dashboard-header flex items-center justify-between mb-7">
                 <div>
                     <h1 className="flex items-center text-2xl font-bold tracking-tight">Good evening, {displayName}<img className='ml-3' src={hand}></img></h1>
                     <p className="text-text-secondary text-sm mt-1">Here's your financial overview for today</p>
                 </div>
-                <div className="flex gap-2.5">
+                <div className="dashboard-actions flex gap-2.5">
                     <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">🔗 Join Group</button>
                     <Link to="/add-expense" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] hover:-translate-y-0.5 transition">+ Add Expense</Link>
                 </div>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
             )}
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-4 gap-5 mb-8">
+            <div className="dashboard-summary-grid grid grid-cols-4 gap-5 mb-8">
                 <SummaryCard 
                     icon={group}
                     iconBg="rgba(99,102,241,0.15)" 

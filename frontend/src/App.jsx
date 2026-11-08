@@ -5,6 +5,7 @@ import { ToastProvider } from './components/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
+import MobileNav from './components/MobileNav';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -18,21 +19,28 @@ import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/auth" />;
-  }
+  if (!user) return <Navigate to="/auth" replace />;
   return children;
 }
 
 function AppLayout() {
+  const { user } = useAuth();
+  const userId = user?.id;
   const [profile, setProfile] = useState(null);
   const [profileSyncComplete, setProfileSyncComplete] = useState(false);
 
   useEffect(() => {
     let active = true;
 
-    // Ensure the backend profile exists before child pages load data that
-    // references public.users (groups, expenses, joins, notifications).
+    if (!userId) {
+      setProfile(null);
+      setProfileSyncComplete(true);
+      return () => { active = false; };
+    }
+
+    setProfileSyncComplete(false);
+
+    // Create/sync the backend profile before pages load data that references it.
     api.get('/api/users/me')
       .then((response) => {
         if (active) setProfile(response.data);
@@ -45,21 +53,22 @@ function AppLayout() {
       });
 
     return () => { active = false; };
-  }, []);
+  }, [userId]);
 
   return (
     <ProtectedRoute>
       {!profileSyncComplete ? (
-        <div className="min-h-screen p-8 text-text-muted">Loading your account...</div>
+        <div className="app-loading min-h-screen p-8 text-text-muted">Loading your account...</div>
       ) : (
-        <div className="flex min-h-screen">
+        <div className="app-shell flex min-h-screen">
           <Sidebar />
-          <div className="flex-1 ml-60">
+          <div className="app-content flex-1 ml-60 min-w-0">
             <Navbar />
-            <main className="pt-16 p-8">
+            <main className="app-main pt-16 p-8">
               <Outlet context={{ profile }} />
             </main>
           </div>
+          <MobileNav />
         </div>
       )}
     </ProtectedRoute>
@@ -72,11 +81,8 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public routes (no sidebar) */}
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-
-            {/* App routes (with sidebar + navbar layout) */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

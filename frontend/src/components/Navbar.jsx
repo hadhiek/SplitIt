@@ -28,7 +28,7 @@ export default function Navbar() {
         const fetchNotifications = async () => {
             try {
                 const res = await api.get('/api/notifications');
-                setNotifications(res.data);
+                setNotifications(Array.isArray(res.data) ? res.data : []);
             } catch (err) {
                 console.error("Failed to load notifications", err);
             }
@@ -70,13 +70,13 @@ export default function Navbar() {
     };
 
     return (
-        <header className="fixed top-0 left-60 right-0 h-16 bg-bg-primary/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 z-50">
+        <header className="app-navbar fixed top-0 left-60 right-0 h-16 bg-bg-primary/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 z-50">
             <div className="flex items-center gap-4">
                 <h2 className="text-[1.1rem] font-semibold">{title}</h2>
             </div>
             <div className="flex items-center gap-3 relative">
                 {/* Search */}
-                <div className="flex items-center gap-2.5 bg-bg-input border border-border rounded-full px-4 py-2 w-60 focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition">
+                <div className="app-navbar__search flex items-center gap-2.5 bg-bg-input border border-border rounded-full px-4 py-2 w-60 focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition">
                     <span className="text-text-muted text-sm">🔍</span>
                     <input type="text" placeholder="Search expenses, groups..." className="bg-transparent border-none outline-none text-text-primary text-sm w-full placeholder:text-text-muted" />
                 </div>
@@ -95,7 +95,7 @@ export default function Navbar() {
 
                     {/* Dropdown Panel */}
                     {showDropdown && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-bg-card border border-border rounded-[14px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden animate-fade-in z-[100]">
+                        <div className="absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-bg-card border border-border rounded-[14px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden animate-fade-in z-[100]">
                             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-primary/50">
                                 <span className="text-sm font-semibold">Notifications</span>
                                 {unreadCount > 0 && (

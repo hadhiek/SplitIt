@@ -63,13 +63,13 @@ export default function GlobalSettlementsPage() {
     const activeGroups = data?.groups?.length || 0;
 
     return (
-        <div className="animate-fade-in pb-20">
+        <div className="global-settlements-page animate-fade-in pb-20">
             <div className="mb-7">
                 <h1 className="text-2xl font-bold tracking-tight">Global Settlements</h1>
                 <p className="text-text-secondary text-sm mt-1">Consolidated debt overview across all your workspaces</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-5 mb-10">
+            <div className="summary-metrics-grid grid grid-cols-3 gap-5 mb-10">
                 <SummaryCard 
                     icon="../../logo/you_owe.png"
                     iconBg="rgba(239,68,68,0.12)" 
@@ -126,7 +126,7 @@ export default function GlobalSettlementsPage() {
                                 {group.settlements.map((s, idx) => {
                                     const isShaking = shakeId === (group.group_id + s.from_user + s.to_user);
                                     return (
-                                    <div key={idx} className={`flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] shadow-sm transition-all duration-300 ${isShaking ? 'animate-shake border-red/50 bg-red-dim/5' : 'hover:border-accent/40'}`}>
+                                    <div key={idx} className={`settlement-row flex items-center gap-5 p-5 bg-bg-card border border-border rounded-[20px] shadow-sm transition-all duration-300 ${isShaking ? 'animate-shake border-red/50 bg-red-dim/5' : 'hover:border-accent/40'}`}>
                                         <div className="flex -space-x-3">
                                             <Avatar initials={s.from_user_name.substring(0,2).toUpperCase()} color="#6366f1" size={40} />
                                             <Avatar initials={s.to_user_name.substring(0,2).toUpperCase()} color="#3b82f6" size={40} />
