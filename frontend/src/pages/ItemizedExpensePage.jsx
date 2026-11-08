@@ -188,7 +188,7 @@ export default function ItemizedExpensePage() {
         warnings.push(`This receipt is in ${currency}, but SplitIt currently records amounts in INR. Convert the values manually before saving.`);
       }
       setOcrWarnings([...new Set(warnings)]);
-      if (data.date && /^\\d{4}-\\d{2}-\\d{2}$/.test(data.date)) setDate(data.date);
+      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
       if (currency === 'INR' && data.total_amount_source === 'printed' && data.total_amount != null) {
         setReceiptTotal(toCents(data.total_amount));
       }
