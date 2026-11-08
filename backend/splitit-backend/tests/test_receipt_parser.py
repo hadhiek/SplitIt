@@ -16,7 +16,7 @@ class ReceiptParserTests(unittest.TestCase):
                 "CGST 2.5% 4.50",
                 "SGST 2.5% 4.50",
                 "Discount 10.00",
-                "Grand Total 179.00",
+                "Grand Total ₹179.00",
             ],
             [0.99] * 10,
         )
