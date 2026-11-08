@@ -52,9 +52,9 @@ try {
   const tesseractDir = join(tempRoot, 'tesseract');
   const coreDir = join(tempRoot, 'core');
   const languageDir = join(tempRoot, 'language');
-  extract(findArchive('tesseract.js-'), tesseractDir);
-  extract(findArchive('tesseract.js-core-'), coreDir);
-  extract(findArchive('tesseract.js-data-eng-'), languageDir);
+  extract(findArchive('tesseract.js-6.0.1'), tesseractDir);
+  extract(findArchive('tesseract.js-core-6.1.2'), coreDir);
+  extract(findArchive('tesseract.js-data-eng-1.0.0'), languageDir);
 
   const tesseractPackage = join(tesseractDir, 'package');
   const corePackage = join(coreDir, 'package');
