@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import api from './api';
 import { ToastProvider } from './components/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -19,27 +19,57 @@ import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/auth" />;
+  if (!user) return <Navigate to="/auth" replace />;
   return children;
 }
 
 function AppLayout() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [profileSyncComplete, setProfileSyncComplete] = useState(false);
+
   useEffect(() => {
-    api.get('/api/users/me').catch(console.error);
-  }, []);
+    let active = true;
+
+    if (!user) {
+      setProfile(null);
+      setProfileSyncComplete(true);
+      return () => { active = false; };
+    }
+
+    setProfileSyncComplete(false);
+
+    // Create/sync the backend profile before pages load data that references it.
+    api.get('/api/users/me')
+      .then((response) => {
+        if (active) setProfile(response.data);
+      })
+      .catch((error) => {
+        console.error('Failed to sync user profile', error);
+      })
+      .finally(() => {
+        if (active) setProfileSyncComplete(true);
+      });
+
+    return () => { active = false; };
+  }, [user?.id]);
 
   return (
     <ProtectedRoute>
-      <div className="app-shell flex min-h-screen">
-        <Sidebar />
-        <div className="app-content flex-1 ml-60 min-w-0">
-          <Navbar />
-          <main className="app-main pt-16 p-8">
-            <Outlet />
-          </main>
+      {!profileSyncComplete ? (
+        <div className="app-loading min-h-screen p-8 text-text-muted">Loading your account...</div>
+      ) : (
+        <div className="app-shell flex min-h-screen">
+          <Sidebar />
+          <div className="app-content flex-1 ml-60 min-w-0">
+            <Navbar />
+            <main className="app-main pt-16 p-8">
+              <Outlet context={{ profile }} />
+            </main>
+          </div>
+          <MobileNav />
         </div>
-        <MobileNav />
-      </div>
+      )}
     </ProtectedRoute>
   );
 }
