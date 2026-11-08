@@ -180,7 +180,8 @@ export default function ItemizedExpensePage() {
       if (currency !== 'INR') {
         warnings.push(`This receipt is in ${currency}, but SplitIt currently records amounts in INR. Convert the values manually before saving.`);
       } else if (data.currency_detected === false) {
-        warnings.push('No currency symbol was detected. INR is assumed; verify the currency on the bill.');
+        const currencyWarning = 'No currency symbol was detected. INR is assumed; verify the currency on the bill.';
+        if (!warnings.includes(currencyWarning)) warnings.push(currencyWarning);
       }
       setOcrWarnings(warnings);
       if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
