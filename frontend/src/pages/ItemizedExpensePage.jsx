@@ -183,7 +183,7 @@ export default function ItemizedExpensePage() {
         warnings.push('No currency symbol was detected. INR is assumed; verify the currency on the bill.');
       }
       setOcrWarnings(warnings);
-      if (data.date && /^\d{4}-\d{2}-\d{2}/.test(data.date)) setDate(data.date);
+      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
       if (currency === 'INR' && data.total_amount_source === 'printed' && data.total_amount != null) {
         setReceiptTotal(toCents(data.total_amount));
       } else {
