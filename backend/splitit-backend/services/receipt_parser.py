@@ -24,7 +24,7 @@ MONEY_RE = re.compile(
     r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)"
     r"(?:\s*/-)?"
     r"(?![A-Za-z0-9])"
-    r"(?!\\s*%)",
+    r"(?!\s*%),
     re.IGNORECASE,
 )
 DATE_RE = re.compile(
