@@ -218,7 +218,30 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
         return None
 
     body = normalized[:last_match.start()].strip()
-    name, quantity = _parse_quantity_and_name(body)
+    quantity = 1
+    candidate_rate = None
+
+    # POS rows often print: description | quantity | unit rate | line total.
+    # Detect the quantity immediately before the penultimate money value.
+    if len(matches) >= 2:
+        previous_match, previous_amount = matches[-2]
+        prefix = normalized[:previous_match[0].start()].rstrip()
+        qty_x = re.search(r"\b(\d{1,3})\s*[x×]\s*$", prefix, re.I)
+        qty_plain = re.search(r"(?:^|\s)(\d{1,3})\s*$", prefix)
+        if qty_x:
+            quantity = max(1, int(qty_x.group(1)))
+            body = prefix[:qty_x.start()].strip()
+            candidate_rate = previous_amount
+        elif qty_plain:
+            quantity = max(1, int(qty_plain.group(1)))
+            body = prefix[:qty_plain.start()].strip()
+            candidate_rate = previous_amount
+
+    if candidate_rate is None:
+        name, quantity = _parse_quantity_and_name(body)
+    else:
+        name = body.strip(" :-|*•")
+
     if not name or len(name) > 100 or not re.search(r"[A-Za-z]", name):
         return None
     if re.search(r"\b(?:total|subtotal|tax|discount|balance|change)\b", name, re.I):
@@ -227,18 +250,16 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
     line_total = raw_total
     unit_price = (line_total / Decimal(quantity)).quantize(CENT, rounding=ROUND_HALF_UP)
 
-    if len(matches) >= 2 and quantity > 1:
-        candidate_rate = matches[-2][1]
+    if candidate_rate is not None and quantity > 1:
         candidate_total = (candidate_rate * quantity).quantize(CENT, rounding=ROUND_HALF_UP)
         expected_total = line_total.quantize(CENT, rounding=ROUND_HALF_UP)
         tolerance = max(CENT, abs(expected_total) * Decimal("0.01"))
         if abs(candidate_total - expected_total) <= tolerance:
             unit_price = candidate_rate.quantize(CENT, rounding=ROUND_HALF_UP)
 
-    # If "2 @ 50" is printed without a separate line total, @ explicitly marks
-    # the final number as a unit rate. This is the only single-number format
-    # where we infer a line total by multiplying the rate.
-    if re.search(r"\b\d{1,3}\s*@\s*$", body):
+    # If a row explicitly uses "2 @ 50" without a separate line total,
+    # treat the marked amount as a unit rate.
+    if candidate_rate is None and re.search(r"\b\d{1,3}\s*@\s*$", body):
         unit_price = line_total
         line_total = (unit_price * quantity).quantize(CENT, rounding=ROUND_HALF_UP)
 
@@ -343,8 +364,9 @@ def parse_receipt_lines(
     if items and sum(item["confidence"] for item in items) / len(items) < 0.45:
         warnings.append("Some text was recognised with low confidence. Review every item name and amount.")
 
+    item_confidences = [item["confidence"] for item in items]
     overall_confidence = (
-        sum(confidences[:len(lines)]) / len(lines) if lines and confidences else None
+        sum(item_confidences) / len(item_confidences) if item_confidences else None
     )
     return {
         "merchant_name": _merchant_name(lines),
