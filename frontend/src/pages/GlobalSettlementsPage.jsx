@@ -69,7 +69,7 @@ export default function GlobalSettlementsPage() {
                 <p className="text-text-secondary text-sm mt-1">Consolidated debt overview across all your workspaces</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-5 mb-10">
+            <div className="summary-metrics-grid grid grid-cols-3 gap-5 mb-10">
                 <SummaryCard 
                     icon="../../logo/you_owe.png"
                     iconBg="rgba(239,68,68,0.12)" 
