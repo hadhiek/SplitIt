@@ -7,6 +7,11 @@ import { runReceiptOcr } from '../utils/receiptOcr';
 
 
 const money = (value) => `₹${(Number(value || 0)).toFixed(2)}`;
+const todayLocal = () => {
+  const value = new Date();
+  value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
+  return value.toISOString().slice(0, 10);
+};
 const toCents = (value) => Math.round((Number(value) || 0) * 100);
 
 function allocateCents(totalCents, weightedPeople) {
@@ -34,7 +39,7 @@ export default function ItemizedExpensePage() {
   const [members, setMembers] = useState([]);
   const [groupId, setGroupId] = useState('');
   const [paidBy, setPaidBy] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [category, setCategory] = useState('Food & Dining');
   const [description, setDescription] = useState('');
   const [merchant, setMerchant] = useState('');
@@ -47,6 +52,7 @@ export default function ItemizedExpensePage() {
   const [receiptPreview, setReceiptPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrStage, setOcrStage] = useState('');
   const [receiptTotal, setReceiptTotal] = useState(null);
   const [ocrWarnings, setOcrWarnings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -170,11 +176,15 @@ export default function ItemizedExpensePage() {
     if (!receiptFile || ocrLoading) return;
     setOcrLoading(true);
     setOcrProgress(0);
+    setOcrStage('Preparing receipt image');
     setOcrWarnings([]);
     setReceiptTotal(null);
     try {
       // OCR and parsing run in this browser. The receipt image is never uploaded to Render.
-      const data = await runReceiptOcr(receiptFile, setOcrProgress);
+      const data = await runReceiptOcr(receiptFile, (progress, stage) => {
+        setOcrProgress(progress);
+        if (stage) setOcrStage(stage);
+      });
       const parsedItems = (data.line_items || []).filter((item) =>
         item.name && Number(item.quantity) > 0 && Number(item.unit_price) > 0
       );
@@ -184,7 +194,7 @@ export default function ItemizedExpensePage() {
         warnings.push(`This receipt is in ${currency}, but SplitIt currently records amounts in INR. Convert the values manually before saving.`);
       }
       setOcrWarnings([...new Set(warnings)]);
-      if (data.date && /^\\d{4}-\\d{2}-\\d{2}$/.test(data.date)) setDate(data.date);
+      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
       if (currency === 'INR' && data.total_amount_source === 'printed' && data.total_amount != null) {
         setReceiptTotal(toCents(data.total_amount));
       }
@@ -197,8 +207,8 @@ export default function ItemizedExpensePage() {
           participantIds: selectedParticipants.map((person) => person.id),
         })));
         setNextItemId(Date.now() + parsedItems.length + 1);
-        if (data.tax != null) setTax(String(Number(data.tax).toFixed(2)));
-        if (data.discount != null) setDiscount(String(Number(data.discount).toFixed(2)));
+        setTax(data.tax != null ? String(Number(data.tax).toFixed(2)) : '0');
+        setDiscount(data.discount != null ? String(Number(data.discount).toFixed(2)) : '0');
         if (data.merchant_name) {
           setMerchant((current) => current || data.merchant_name);
           setDescription((current) => current || `Receipt - ${data.merchant_name}`);
@@ -214,6 +224,7 @@ export default function ItemizedExpensePage() {
     } finally {
       setOcrLoading(false);
       setOcrProgress(0);
+      setOcrStage('');
     }
   };
 
@@ -302,7 +313,7 @@ export default function ItemizedExpensePage() {
               {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-                  {ocrLoading ? `Scanning on device… ${ocrProgress}%` : 'Extract items from receipt'}
+                  {ocrLoading ? `${ocrStage || 'Scanning on device'}… ${ocrProgress}%` : 'Extract items from receipt'}
                 </button>
                 {receiptFile && <button type="button" onClick={() => { setReceiptFile(null); setReceiptTotal(null); setOcrWarnings([]); }} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
               </div>

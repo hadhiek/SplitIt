@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated locally hosted OCR engine/model assets
+/frontend/public/ocr/

@@ -12,10 +12,6 @@ from functools import lru_cache
 from threading import Lock
 from typing import Any
 
-import numpy as np
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-from rapidocr_onnxruntime import RapidOCR
-
 from services.receipt_parser import MAX_ITEMS, parse_receipt_lines
 
 
@@ -27,14 +23,21 @@ _OCR_LOCK = Lock()
 
 
 @lru_cache(maxsize=1)
-def _ocr_engine() -> RapidOCR:
-    # Only the model is cached in memory. No image or OCR result is cached.
+def _ocr_engine():
+    # Avoid importing the native OCR runtime during API startup. The browser
+    # performs receipt OCR for current clients; this remains a lazy fallback
+    # for older clients that still call the legacy endpoint.
+    from rapidocr_onnxruntime import RapidOCR
+
     return RapidOCR()
 
 
 def _prepare_image(image_bytes: bytes) -> np.ndarray:
     """Decode safely, correct phone orientation and improve print contrast."""
     try:
+        import numpy as np
+        from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+
         with Image.open(io.BytesIO(image_bytes)) as source:
             if source.width <= 0 or source.height <= 0:
                 raise ValueError("The receipt image has invalid dimensions.")
