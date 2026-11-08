@@ -547,11 +547,13 @@ async function getWorker(onProgress) {
         logger: (message) => {
           const progress = Number(message.progress || 0);
           if (message.status === 'loading language traineddata') {
-            onProgress?.(Math.round(5 + progress * 15), 'Loading English model');
+            onProgress?.(Math.round(15 + progress * 10), 'Loading English model');
           } else if (message.status === 'recognizing text') {
-            onProgress?.(Math.round(20 + progress * 80), 'Reading receipt');
-          } else if (message.status) {
-            onProgress?.(5, 'Starting OCR engine');
+            onProgress?.(Math.round(25 + progress * 75), 'Reading receipt');
+          } else if (message.status === 'loading tesseract core') {
+            onProgress?.(Math.round(5 + progress * 5), 'Loading OCR engine');
+          } else if (message.status === 'initializing tesseract' || message.status === 'initializing api') {
+            onProgress?.(12, 'Starting OCR engine');
           }
         },
       }))
@@ -628,12 +630,13 @@ async function prepareReceiptImage(file) {
 export async function runReceiptOcr(file, onProgress) {
   if (!file) throw new Error('Choose a receipt image first.');
 
+  let worker;
   try {
     onProgress?.(1, 'Preparing receipt image');
     const image = await prepareReceiptImage(file);
     onProgress?.(5, 'Starting OCR engine');
 
-    const worker = await getWorker(onProgress);
+    worker = await getWorker(onProgress);
     const result = await worker.recognize(image, {}, { blocks: true });
     const data = result?.data || {};
     if (!normalize(data.text)) {
@@ -643,6 +646,16 @@ export async function runReceiptOcr(file, onProgress) {
     onProgress?.(100, 'Finishing');
     return parseReceiptData(data);
   } catch (error) {
+    // A failed worker can become permanently unusable in some mobile WebViews.
+    // Dispose it and allow the next explicit retry to initialise a fresh worker.
+    if (worker) {
+      workerPromise = null;
+      try {
+        await worker.terminate();
+      } catch {
+        // Preserve the original OCR error.
+      }
+    }
     throw new Error(error?.message || 'On-device receipt scanning failed. Please retry or enter items manually.');
   }
 }
