@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predev": "node scripts/prepare-ocr-assets.mjs",
-    "prebuild": "node scripts/prepare-ocr-assets.mjs"
+    "prebuild": "node scripts/prepare-ocr-assets.mjs",
+    "test:receipt-ocr": "node --test src/utils/receiptOcr.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
