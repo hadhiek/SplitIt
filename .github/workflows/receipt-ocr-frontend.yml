@@ -28,7 +28,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
       - name: Prepare locally hosted OCR engine and language model
-        run: npm run prebuild
+        run: npm run prepare:ocr
       - name: Run receipt OCR parser regression tests
         run: npm run test:receipt-ocr
       - name: Run frontend lint
