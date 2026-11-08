@@ -675,9 +675,10 @@
 
 
 @media (max-width: 767px) {
-  .app-main .dashboard-summary-grid,
-  .app-main .settlement-summary-grid,
-  .app-main .summary-metrics-grid {
+  /* Match the specificity of the generic one-column grid rule above. */
+  .app-main .grid.dashboard-summary-grid,
+  .app-main .grid.settlement-summary-grid,
+  .app-main .grid.summary-metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.75rem !important;
   }
