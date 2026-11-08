@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { SummaryCard, StatusBadge } from '../components/ui';
@@ -83,41 +83,54 @@ function JoinGroupModal({ open, onClose }) {
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { profile } = useOutletContext();
     const showToast = useToast();
-    const [profile, setProfile] = useState(null);
     const [summary, setSummary] = useState(null);
+    const [summaryError, setSummaryError] = useState(false);
     const [loading, setLoading] = useState(true);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const [myRequests, setMyRequests] = useState([]);
 
     useEffect(() => {
+        let active = true;
+
         async function fetchDashboard() {
-            try {
-                // Fetch basic profile
-                const profileRes = await api.get('/api/users/me');
-                setProfile(profileRes.data);
+            // Load each resource independently: one failing endpoint must not
+            // prevent the other dashboard sections from rendering.
+            const [summaryResult, requestsResult] = await Promise.allSettled([
+                api.get('/api/users/me/dashboard-summary'),
+                api.get('/api/users/me/join-requests')
+            ]);
 
-                // Fetch dashboard summary (real data)
-                const summaryRes = await api.get('/api/users/me/dashboard-summary');
-                setSummary(summaryRes.data);
+            if (!active) return;
 
-                // Fetch user's join requests to show rejected/accepted notifications
-                const reqRes = await api.get('/api/users/me/join-requests');
-                setMyRequests(reqRes.data);
+            if (summaryResult.status === 'fulfilled' && summaryResult.value.data) {
+                setSummary(summaryResult.value.data);
+                setSummaryError(false);
+            } else {
+                console.error("Failed to load dashboard summary",
+                    summaryResult.status === 'rejected' ? summaryResult.reason : 'Empty response');
+                setSummaryError(true);
+            }
 
-                // Show toasts for recently responded requests
-                for (const req of reqRes.data) {
+            if (requestsResult.status === 'fulfilled' && Array.isArray(requestsResult.value.data)) {
+                const requests = requestsResult.value.data;
+                setMyRequests(requests);
+
+                for (const req of requests) {
                     if (req.status === 'rejected' && req.responded_at) {
                         showToast('error', 'Request Rejected', `Your request to join "${req.group_name || 'a group'}" was rejected.`);
                     }
                 }
-            } catch (err) {
-                console.error("Failed to load dashboard data", err);
-            } finally {
-                setLoading(false);
+            } else if (requestsResult.status === 'rejected') {
+                console.error("Failed to load join requests", requestsResult.reason);
             }
+
+            setLoading(false);
         }
+
         fetchDashboard();
+        return () => { active = false; };
     }, []);
 
     const recent = summary?.recent_expenses || []; 
@@ -173,7 +186,7 @@ export default function DashboardPage() {
                     icon={group}
                     iconBg="rgba(99,102,241,0.15)" 
                     label="Active Groups" 
-                    value={summary?.groups_count || 0} 
+                    value={summary ? summary.groups_count : '—'} 
                     colorClass="purple" 
                     change={{ text: 'Syncing live' }} 
                 />
@@ -181,7 +194,7 @@ export default function DashboardPage() {
                     icon={you_owe} 
                     iconBg="rgba(239,68,68,0.12)" 
                     label="You Owe" 
-                    value={`₹${summary?.total_owe || 0}`} 
+                    value={summary ? `₹${summary.total_owe}` : '—'} 
                     colorClass="red" 
                     valueClass="text-red" 
                     change={{ text: 'To be settled' }} 
@@ -190,7 +203,7 @@ export default function DashboardPage() {
                     icon={owed}
                     iconBg="rgba(34,197,94,0.12)" 
                     label="You Are Owed" 
-                    value={`₹${summary?.total_owed || 0}`} 
+                    value={summary ? `₹${summary.total_owed}` : '—'} 
                     colorClass="green" 
                     valueClass="text-green" 
                     change={{ up: true, text: 'Expected back' }} 
@@ -199,7 +212,7 @@ export default function DashboardPage() {
                     icon={approval}
                     iconBg="rgba(59,130,246,0.12)" 
                     label="Approvals" 
-                    value={summary?.pending_approvals_count || 0} 
+                    value={summary ? summary.pending_approvals_count : '—'} 
                     colorClass="blue" 
                     change={{ text: 'Awaiting you' }} 
                 />
@@ -250,10 +263,14 @@ export default function DashboardPage() {
                             <div className="text-xs text-text-muted mt-0.5">Requests from others</div>
                         </div>
                         <span className={`inline-flex items-center gap-[5px] px-2.5 py-[3px] rounded-full text-xs font-semibold ${summary?.pending_approvals_count > 0 ? 'bg-yellow-dim text-yellow' : 'bg-gray-dim text-text-muted'}`}>
-                            {summary?.pending_approvals_count || 0} pending
+                            {summary ? summary.pending_approvals_count : '—'} pending
                         </span>
                     </div>
-                    {summary?.pending_approvals_count === 0 ? (
+                    {!summary ? (
+                        <div className="py-8 text-center text-sm text-text-muted">
+                            {summaryError ? 'Dashboard summary is temporarily unavailable.' : 'Loading summary...'}
+                        </div>
+                    ) : summary.pending_approvals_count === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
                             <div className="text-3xl mb-2"><img src={tick}/></div>
                             <div className="text-sm">All caught up!</div>

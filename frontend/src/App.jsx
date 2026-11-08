@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import api from './api';
 import { ToastProvider } from './components/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -25,22 +25,43 @@ function ProtectedRoute({ children }) {
 }
 
 function AppLayout() {
+  const [profile, setProfile] = useState(null);
+  const [profileSyncComplete, setProfileSyncComplete] = useState(false);
+
   useEffect(() => {
-    // Sync user to backend on authenticated load
-    api.get('/api/users/me').catch(console.error);
+    let active = true;
+
+    // Ensure the backend profile exists before child pages load data that
+    // references public.users (groups, expenses, joins, notifications).
+    api.get('/api/users/me')
+      .then((response) => {
+        if (active) setProfile(response.data);
+      })
+      .catch((error) => {
+        console.error('Failed to sync user profile', error);
+      })
+      .finally(() => {
+        if (active) setProfileSyncComplete(true);
+      });
+
+    return () => { active = false; };
   }, []);
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 ml-60">
-          <Navbar />
-          <main className="pt-16 p-8">
-            <Outlet />
-          </main>
+      {!profileSyncComplete ? (
+        <div className="min-h-screen p-8 text-text-muted">Loading your account...</div>
+      ) : (
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex-1 ml-60">
+            <Navbar />
+            <main className="pt-16 p-8">
+              <Outlet context={{ profile }} />
+            </main>
+          </div>
         </div>
-      </div>
+      )}
     </ProtectedRoute>
   );
 }
