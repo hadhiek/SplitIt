@@ -25,13 +25,14 @@ function ProtectedRoute({ children }) {
 
 function AppLayout() {
   const { user } = useAuth();
+  const userId = user?.id;
   const [profile, setProfile] = useState(null);
   const [profileSyncComplete, setProfileSyncComplete] = useState(false);
 
   useEffect(() => {
     let active = true;
 
-    if (!user) {
+    if (!userId) {
       setProfile(null);
       setProfileSyncComplete(true);
       return () => { active = false; };
@@ -52,7 +53,7 @@ function AppLayout() {
       });
 
     return () => { active = false; };
-  }, [user?.id]);
+  }, [userId]);
 
   return (
     <ProtectedRoute>
