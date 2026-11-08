@@ -76,11 +76,11 @@ class ReceiptParserTests(unittest.TestCase):
                 "Tea 30.00",
                 "Subtotal 30.00",
                 "Tax 5.00",
-                "Grand Total 36.00",
+                "Grand Total 40.00",
             ],
             [0.9] * 5,
         )
-        self.assertEqual(result["total_amount"], 36.0)
+        self.assertEqual(result["total_amount"], 40.0)
         self.assertTrue(any("do not reconcile" in warning for warning in result["warnings"]))
 
     def test_no_items_returns_manual_entry_warning(self):
@@ -102,6 +102,18 @@ class ReceiptParserTests(unittest.TestCase):
         )
         self.assertEqual([item["name"] for item in result["line_items"]], ["Coffee"])
         self.assertEqual(result["total_amount"], 49.5)
+
+
+    def test_quantity_with_unit_rate_but_no_line_total(self):
+        result = parse_receipt_lines(
+            ["COFFEE BAR", "Tea 2 x 50.00", "Payable Amount 100.00"],
+            [0.9, 0.95, 0.95],
+        )
+        self.assertEqual(result["line_items"][0]["name"], "Tea")
+        self.assertEqual(result["line_items"][0]["quantity"], 2)
+        self.assertEqual(result["line_items"][0]["unit_price"], 50.0)
+        self.assertEqual(result["line_items"][0]["line_total"], 100.0)
+        self.assertEqual(result["total_amount"], 100.0)
 
     def test_confidence_is_carried_to_items(self):
         result = parse_receipt_lines(
