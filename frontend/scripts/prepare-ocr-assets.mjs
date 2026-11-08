@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, copyFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
