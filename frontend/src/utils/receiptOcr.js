@@ -563,14 +563,40 @@ async function getWorker(onProgress) {
   return workerPromise;
 }
 
-async function prepareReceiptImage(file) {
-  if (typeof createImageBitmap !== 'function') return file;
-
-  let bitmap;
+async function loadImageElement(file) {
+  const objectUrl = URL.createObjectURL(file);
   try {
-    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    if (!bitmap.width || !bitmap.height) {
-      throw new Error('The selected image has invalid dimensions.');
+    return await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('The selected image could not be decoded by this browser.'));
+      image.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function prepareReceiptImage(file) {
+  let bitmap = null;
+  let imageElement = null;
+
+  try {
+    if (typeof createImageBitmap === 'function') {
+      try {
+        bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      } catch {
+        // Some mobile WebViews do not implement the imageOrientation option.
+      }
+    }
+
+    if (!bitmap) imageElement = await loadImageElement(file);
+
+    const source = bitmap || imageElement;
+    const sourceWidth = bitmap ? bitmap.width : imageElement.naturalWidth;
+    const sourceHeight = bitmap ? bitmap.height : imageElement.naturalHeight;
+    if (!sourceWidth || !sourceHeight) {
+      throw new Error('The selected image has invalid dimensions. Choose another photo.');
     }
 
     const maxWidth = 2400;
@@ -578,31 +604,27 @@ async function prepareReceiptImage(file) {
     const maxPixels = 8_000_000;
     const scale = Math.min(
       1,
-      maxWidth / bitmap.width,
-      maxHeight / bitmap.height,
-      Math.sqrt(maxPixels / (bitmap.width * bitmap.height)),
+      maxWidth / sourceWidth,
+      maxHeight / sourceHeight,
+      Math.sqrt(maxPixels / (sourceWidth * sourceHeight)),
     );
 
     if (scale >= 0.999 && file.size <= 3 * 1024 * 1024) return file;
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
     const context = canvas.getContext('2d', { alpha: false });
-    if (!context) return file;
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    if (!context) throw new Error('This browser could not prepare the receipt image. Try another browser.');
 
+    context.drawImage(source, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-    if (!blob) return file;
+    if (!blob) throw new Error('This browser could not compress the receipt image. Try another photo.');
     return blob;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('invalid dimensions')) throw error;
-    return file;
   } finally {
     bitmap?.close?.();
   }
 }
-
 export async function runReceiptOcr(file, onProgress) {
   if (!file) throw new Error('Choose a receipt image first.');
 
