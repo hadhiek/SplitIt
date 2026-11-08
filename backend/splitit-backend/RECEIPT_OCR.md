@@ -1,79 +1,62 @@
 # Receipt extraction and itemized expenses
 
-The itemized-expense screen sends a selected JPG, PNG, or WEBP image to the authenticated `POST /api/receipts/extract` endpoint.
+## Current client flow
 
-## Processing pipeline
+The itemized-expense screen performs OCR in the browser/on-device using Tesseract.js. Receipt images are not uploaded to Render for scanning. The frontend build prepares and serves the Tesseract.js worker, WebAssembly core files, and English language data from the app's own /ocr static path. Scanning therefore does not require a third-party CDN at runtime.
 
-1. FastAPI accepts only JPEG, PNG, and WEBP uploads, reads at most 10 MB plus one byte, and always closes the temporary upload.
-2. Pillow applies EXIF orientation, pixel-count limits, resizing, contrast enhancement, and sharpening in memory.
-3. RapidOCR (ONNX Runtime) detects text boxes, text and confidence scores. The server groups detections into physical receipt rows while retaining mean confidence.
-4. A separate, dependency-light parser interprets merchant, date, currency, item rows, quantities, unit prices, subtotal, taxes, discounts and printed total.
-5. The API returns an editable draft. It does not create files, database rows, storage objects, or OCR history.
+1. The user selects a JPG, PNG, or WEBP image (maximum 10 MB).
+2. The browser decodes and bounds the image to approximately 8 megapixels before recognition.
+3. A reusable Tesseract.js worker recognises the receipt and returns structured blocks, lines, words, bounding boxes, and confidence.
+4. The browser parser uses row/column positions where headers are present; it filters common invoice identifiers and summary rows, and only infers quantity/rate when evidence is adequate.
+5. The UI fills an editable draft. The user must review the items, quantities, prices, tax, discount, printed total, and participant assignments before saving.
+6. The existing expense API receives only the final expense fields and per-person split amounts. The receipt image and OCR payload are not sent or persisted.
 
-The ONNX OCR model is cached once per worker. OCR calls on that worker are serialized. Receipt-specific bytes and text are not cached.
+## Compatibility endpoint
 
-## Response fields
+POST /api/receipts/extract remains available as a legacy fallback for previously installed clients. It accepts JPEG, PNG, and WEBP uploads up to 10 MB, processes them in memory using RapidOCR (ONNX Runtime), and returns the same general editable-draft shape. Current frontend builds do not call this endpoint.
 
-The response includes:
+The legacy OCR model is loaded lazily on the first legacy request rather than during normal FastAPI startup. The model is cached per worker and OCR calls on that worker are serialized. Receipt-specific bytes and text are not cached or stored.
 
-- `merchant_name`, `date` (ISO `YYYY-MM-DD`), and `currency`.
-- `currency_detected` to distinguish a visible currency marker from the India-first INR fallback.
-- `line_items[]`: `name`, `quantity`, `unit_price`, `line_total`, and OCR `confidence`.
-- `subtotal`, `subtotal_source`, `tax`, `discount`, `total_amount`, and `total_amount_source`.
-- Overall item confidence, processing duration, OCR engine and parser warnings.
+## Parsed fields
 
-Example:
+The on-device parser returns:
 
-```json
-{
-  "merchant_name": "Example Cafe",
-  "date": "2026-11-03",
-  "line_items": [
-    { "name": "Coffee", "quantity": 2, "unit_price": 60.0, "line_total": 120.0, "confidence": 0.96 }
-  ],
-  "subtotal": 120.0,
-  "subtotal_source": "printed",
-  "tax": 6.0,
-  "discount": null,
-  "total_amount": 126.0,
-  "total_amount_source": "printed",
-  "currency": "INR",
-  "currency_detected": true,
-  "warnings": []
-}
-```
+- merchant_name, date (ISO YYYY-MM-DD), and currency.
+- currency_detected to distinguish a visible currency marker from the INR fallback.
+- line_items[]: name, quantity, unit_price, line_total, and OCR confidence.
+- subtotal, subtotal_source, tax, discount, total_amount, and total_amount_source.
+- Overall confidence and warnings, including arithmetic mismatches and ambiguous rows.
 
 ## Accuracy and user confirmation
 
-Receipt layouts are not standardised. The parser handles common POS-style rows, quantity/rate/line-total columns, Indian and Western comma grouping, date formats, GST components, discounts, and summary totals. It uses OCR positions and confidence rather than treating every trailing number as a price.
+Receipt layouts are not standardised. The parser recognises common item/quantity/rate/amount headers and common quantity forms. When there are two unlabelled numeric fields, it does not guess which is quantity and which is price. Common invoice/order/GST identifiers, phone numbers, footer lines, and summary rows are excluded from line-item candidates.
 
-This is still heuristic parsing, not a trained receipt-understanding model. It flags low-confidence or unreconciled values rather than silently claiming certainty. The itemized screen shows the printed total and blocks saving while the editable item/tax/discount calculation differs from that printed total. Review every item and participant assignment.
+This is still heuristic OCR parsing, not a receipt-trained document-understanding model. OCR confidence is not a guarantee of semantic correctness. The UI keeps the result editable and asks users to review all values; subtotal/printed-total mismatches are surfaced before saving.
 
-For an unfamiliar currency, OCR results are not auto-applied to the INR form; convert the values manually first. If a currency marker is absent, INR is assumed with a warning.
+English is the currently bundled OCR language. Receipts printed in other languages may have lower recognition accuracy. A future multilingual model should be added only with measured accuracy and mobile download-size trade-offs.
 
 ## Persistence and privacy
 
-The image is sent to the backend for temporary extraction. It is not uploaded to Supabase Storage and no extracted OCR payload is stored. The expense submission sends only the final description, total, date, group and participant split amounts. Receipt attachments are not currently retained with saved expenses.
+On-device OCR does not send the receipt image or raw OCR text to Render or Supabase. Expense submission sends only the final description, total, date, group and participant split amounts. Receipt attachments are not currently retained with saved expenses.
+
+Legacy clients that explicitly call POST /api/receipts/extract still upload the image temporarily to Render for processing. The compatibility endpoint does not persist image bytes or OCR output.
 
 ## Tests
 
-Run the parser tests without installing the OCR model:
+Run the frontend parser regression suite:
+
+```bash
+cd frontend
+npm ci
+npm run test:receipt-ocr
+npm run build
+```
+
+Run the legacy backend parser tests:
 
 ```bash
 cd backend/splitit-backend
 python -m unittest discover -s tests -v
 ```
 
-The parser test suite is also run by the GitHub Actions workflow for this receipt branch.
-
-
-## Receipt-specific parsing alternatives considered
-
-The current implementation stays offline and keeps RapidOCR as the text-recognition layer, with a separate parser that we can test and tune without external credentials. If real receipt photos still produce too many corrections, the next meaningful upgrade is a receipt-trained/document-understanding parser rather than adding more regular expressions.
-
-- **Amazon Textract AnalyzeExpense (cloud):** receipt/invoice-aware output with separate `SummaryFields` and `LineItemGroups`, including normalized `ITEM`, `QUANTITY`, and `PRICE` detections. It also returns OCR geometry and confidence. This is a strong candidate for an optional cloud provider. Documentation: https://docs.aws.amazon.com/textract/latest/dg/expensedocuments.html
-- **Azure AI Document Intelligence prebuilt receipt (cloud):** receipt-specific structured extraction for merchant, transaction date, tax, total, and item arrays with name, quantity, unit price and total price. Version 4.0 GA also exposes tax-detail and country/region fields. It requires an Azure Document Intelligence resource and sends the image to Azure. Documentation: https://learn.microsoft.com/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0
-- **PaddleOCR PP-Structure (local):** a heavier local route for layout analysis and table extraction. It could help on dense multi-column invoices, but adds runtime/model weight and still needs a business parser for receipt totals and splits.
-- **RapidOCR package maintenance:** this branch still uses the existing `rapidocr-onnxruntime` dependency to avoid an untested OCR-engine swap during the parser fix. Current RapidOCR documentation says the `rapidocr_onnxruntime`, `rapidocr_openvino`, and `rapidocr_paddle` packages are gradually being retired in favour of the consolidated `rapidocr` package. Schedule that API/dependency migration as a separate smoke-tested change: https://rapidai.github.io/RapidOCRDocs/main/en/install_usage/rapidocr/install/
-
-The cloud options are not enabled in this PR. They need a provider decision, secrets management, cost controls, retention/privacy review, and representative receipt tests. For the current offline version, the most valuable next validation is a small, diverse set of real receipts (thermal till slips, restaurant bills with GST, supermarket quantity/rate columns, faded photos, and long receipts), with expected item and total annotations.
+The frontend CI workflow runs local OCR asset preparation, parser tests, lint, and a production build.
