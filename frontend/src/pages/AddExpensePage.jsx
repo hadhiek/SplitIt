@@ -223,22 +223,18 @@ export default function AddExpensePage() {
                         </div>
                     </div>
 
-                    {/* Receipt Upload */}
+                    {/* Receipt scanning is handled by the dedicated itemized expense flow. */}
                     <div className="bg-bg-card border border-border rounded-[20px] p-6">
-                        <div className="text-[0.95rem] font-semibold mb-4">Receipt / Proof</div>
-                        <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="receipt-dropzone border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
-                            <input type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                            <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src={tick}/> : <img src={link}/>}</div>
-                            <div className="text-[0.95rem] font-semibold mb-1.5">{fileName || 'Drag & drop receipt here'}</div>
-                            <div className="text-xs text-text-muted">{fileName || 'or click to browse · PNG, JPG, PDF up to 10MB'}</div>
-                        </div>
-                        {fileName && (
-                            <div className="mt-3 flex items-center gap-2.5 bg-green-dim border border-[rgba(34,197,94,0.3)] rounded-[10px] px-3.5 py-2.5">
-                                <span><img src={bill}/></span>
-                                <span className="text-sm flex-1 truncate">{fileName}</span>
-                                <span className="text-green text-xs">✓ Ready</span>
-                            </div>
-                        )}
+                        <div className="text-[0.95rem] font-semibold mb-2">Receipt scanning</div>
+                        <p className="text-sm text-text-secondary mb-3">
+                            Have a receipt? Scan it and split the bill by individual items.
+                        </p>
+                        <Link
+                            to="/add-expense/itemized"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"
+                        >
+                            Scan receipt and split items →
+                        </Link>
                     </div>
                 </div>
 
