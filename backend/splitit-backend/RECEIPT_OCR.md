@@ -65,3 +65,15 @@ python -m unittest discover -s tests -v
 ```
 
 The parser test suite is also run by the GitHub Actions workflow for this receipt branch.
+
+
+## Receipt-specific parsing alternatives considered
+
+The current implementation stays offline and keeps RapidOCR as the text-recognition layer, with a separate parser that we can test and tune without external credentials. If real receipt photos still produce too many corrections, the next meaningful upgrade is a receipt-trained/document-understanding parser rather than adding more regular expressions.
+
+- **Amazon Textract AnalyzeExpense (cloud):** receipt/invoice-aware output with separate `SummaryFields` and `LineItemGroups`, including normalized `ITEM`, `QUANTITY`, and `PRICE` detections. It also returns OCR geometry and confidence. This is a strong candidate for an optional cloud provider. Documentation: https://docs.aws.amazon.com/textract/latest/dg/expensedocuments.html
+- **Azure AI Document Intelligence prebuilt receipt (cloud):** receipt-specific structured extraction for merchant, transaction date, tax, total, and item arrays with name, quantity, unit price and total price. Version 4.0 GA also exposes tax-detail and country/region fields. It requires an Azure Document Intelligence resource and sends the image to Azure. Documentation: https://learn.microsoft.com/azure/ai-services/document-intelligence/prebuilt/receipt?view=doc-intel-4.0.0
+- **PaddleOCR PP-Structure (local):** a heavier local route for layout analysis and table extraction. It could help on dense multi-column invoices, but adds runtime/model weight and still needs a business parser for receipt totals and splits.
+- **RapidOCR package maintenance:** this branch still uses the existing `rapidocr-onnxruntime` dependency to avoid an untested OCR-engine swap during the parser fix. Current RapidOCR documentation says the `rapidocr_onnxruntime`, `rapidocr_openvino`, and `rapidocr_paddle` packages are gradually being retired in favour of the consolidated `rapidocr` package. Schedule that API/dependency migration as a separate smoke-tested change: https://rapidai.github.io/RapidOCRDocs/main/en/install_usage/rapidocr/install/
+
+The cloud options are not enabled in this PR. They need a provider decision, secrets management, cost controls, retention/privacy review, and representative receipt tests. For the current offline version, the most valuable next validation is a small, diverse set of real receipts (thermal till slips, restaurant bills with GST, supermarket quantity/rate columns, faded photos, and long receipts), with expected item and total annotations.
