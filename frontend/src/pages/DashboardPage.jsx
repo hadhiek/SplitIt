@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { SummaryCard, StatusBadge } from '../components/ui';
@@ -83,8 +83,8 @@ function JoinGroupModal({ open, onClose }) {
 
 export default function DashboardPage() {
     const { user } = useAuth();
+    const { profile } = useOutletContext();
     const showToast = useToast();
-    const [profile, setProfile] = useState(null);
     const [summary, setSummary] = useState(null);
     const [summaryError, setSummaryError] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -97,19 +97,12 @@ export default function DashboardPage() {
         async function fetchDashboard() {
             // Load each resource independently: one failing endpoint must not
             // prevent the other dashboard sections from rendering.
-            const [profileResult, summaryResult, requestsResult] = await Promise.allSettled([
-                api.get('/api/users/me'),
+            const [summaryResult, requestsResult] = await Promise.allSettled([
                 api.get('/api/users/me/dashboard-summary'),
                 api.get('/api/users/me/join-requests')
             ]);
 
             if (!active) return;
-
-            if (profileResult.status === 'fulfilled') {
-                setProfile(profileResult.value.data);
-            } else {
-                console.error("Failed to load user profile", profileResult.reason);
-            }
 
             if (summaryResult.status === 'fulfilled' && summaryResult.value.data) {
                 setSummary(summaryResult.value.data);
