@@ -106,6 +106,31 @@ test('parses Indian day-first dates and rejects impossible dates', () => {
   assert.equal(invalid.date, null);
 });
 
+test('handles explicit leading and suffix quantity formats without multiplying row totals twice', () => {
+  const data = parseReceiptData({
+    text: 'Cafe\n2 x Tea 50.00\nCoffee x 2 100.00\nGrand Total 150.00',
+    blocks: receiptBlocks([
+      line('2 x Tea 50.00', [word('2', 10), word('x', 40), word('Tea', 110), word('50.00', 310)], 0),
+      line('Coffee x 2 100.00', [word('Coffee', 30), word('x', 120), word('2', 180), word('100.00', 310)], 25),
+      line('Grand Total 150.00', [word('Grand', 30), word('Total', 90), word('150.00', 310)], 50),
+    ]),
+  });
+
+  assert.equal(data.line_items.length, 2);
+  assert.deepEqual(
+    data.line_items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      line_total: item.line_total,
+    })),
+    [
+      { name: 'Tea', quantity: 2, unit_price: 25, line_total: 50 },
+      { name: 'Coffee', quantity: 2, unit_price: 50, line_total: 100 },
+    ],
+  );
+});
+
 test('reports subtotal mismatches rather than silently accepting wrong item totals', () => {
   const data = parseReceiptData({
     text: 'Tea 20.00\\nSubtotal 25.00\\nGrand Total 25.00',
