@@ -4,6 +4,38 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/ToastProvider';
 
+
+async function optimizeReceiptForUpload(file) {
+  // Compress large phone photos in the browser to reduce mobile upload time.
+  // If a browser cannot decode/encode the image, fall back to the original.
+  if (typeof createImageBitmap !== 'function') return file;
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1800 / bitmap.width, 2600 / bitmap.height);
+    if (scale === 1 && file.size <= 2 * 1024 * 1024) return file;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.84));
+    if (!blob) return file;
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'receipt';
+    return new File([blob], `${baseName}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  } finally {
+    bitmap?.close?.();
+  }
+}
+
 const money = (value) => `₹${(Number(value || 0)).toFixed(2)}`;
 const toCents = (value) => Math.round((Number(value) || 0) * 100);
 
@@ -168,8 +200,9 @@ export default function ItemizedExpensePage() {
     setOcrLoading(true);
     setOcrWarnings([]);
     try {
+      const uploadFile = await optimizeReceiptForUpload(receiptFile);
       const formData = new FormData();
-      formData.append('file', receiptFile);
+      formData.append('file', uploadFile);
       const response = await api.post('/api/receipts/extract', formData, {
         timeout: 120000,
       });
@@ -213,7 +246,12 @@ export default function ItemizedExpensePage() {
       }
     } catch (error) {
       const detail = error.response?.data?.detail;
-      showToast('error', 'Receipt scan failed', detail || error.message || 'Please enter the items manually.');
+      const networkMessage = error.code === 'ECONNABORTED'
+        ? 'The scan took too long and timed out. Try a smaller, clearer image or retry when your connection is stable.'
+        : !error.response
+          ? 'Could not reach the receipt scanner. Check your connection and retry; the server may also be starting up.'
+          : null;
+      showToast('error', 'Receipt scan failed', detail || networkMessage || error.message || 'Please enter the items manually.');
     } finally {
       setOcrLoading(false);
     }
