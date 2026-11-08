@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 from core.database import get_db
 from core.security import get_current_user_id
-from models.domain import Group, GroupMember, JoinRequest, Notification
+from models.domain import Group, GroupMember, JoinRequest, Notification, Expense
 from schemas.dto import (
     GroupCreate, GroupOut, GroupDetailOut,
     JoinGroupIn, JoinRequestOut, JoinRequestAction
