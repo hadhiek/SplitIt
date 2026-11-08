@@ -306,7 +306,7 @@ export default function ItemizedExpensePage() {
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
                   {ocrLoading ? 'Scanning receipt…' : 'Extract items from receipt'}
                 </button>
-                {receiptFile && <button type="button" onClick={() => setReceiptFile(null)} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
+                {receiptFile && <button type="button" onClick={() => { setReceiptFile(null); setReceiptTotal(null); setOcrWarnings([]); }} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
