@@ -136,6 +136,7 @@ function findColumnHeader(lines) {
       const label = word.text.toLowerCase().replace(/[^a-z]/g, '');
       const x = word.x;
       if (x == null) continue;
+      if (/^(hsn|sac|itemcode|productcode)$/.test(label)) anchors.hsn = x;
       if (/^(qty|qnty|quantity|nos)$/.test(label)) anchors.quantity = x;
       if (/^(rate|price|unitprice|mrp)$/.test(label)) anchors.rate = x;
       if (/^(amount|amt|value|total)$/.test(label)) anchors.amount = x;
@@ -242,6 +243,7 @@ function parseWithColumns(line, columns, pageWidth, warnings) {
   if (lineTotal == null || lineTotal <= 0) return null;
 
   const firstNumericColumn = Math.min(
+    columns.anchors.hsn ?? Infinity,
     columns.anchors.quantity ?? Infinity,
     columns.anchors.rate ?? Infinity,
     columns.anchors.amount ?? Infinity,
@@ -297,6 +299,13 @@ function parseWithoutColumns(line, warnings) {
   if (amountValues.length === 2) {
     const first = amountValues[0];
     const second = amountValues[1];
+    const suffixQuantity = line.text.match(/^(.+?)\s*[x×]\s*(\d{1,3})\s+[-+]?/i);
+    if (suffixQuantity && Number.isInteger(Number(suffixQuantity[2])) && Number(suffixQuantity[2]) >= 1 && Number(suffixQuantity[2]) <= 999) {
+      const quantity = Number(suffixQuantity[2]);
+      const unitPrice = second.value;
+      return makeItem(suffixQuantity[1], quantity, quantity * unitPrice, itemConfidence(line), unitPrice);
+    }
+
     const explicitQuantity = /\b\d{1,3}\s*[x×]\s*\d[\d,.]*/i.test(line.text);
     if (explicitQuantity && Number.isInteger(first.value) && first.value >= 1 && first.value <= 999) {
       let name = '';
