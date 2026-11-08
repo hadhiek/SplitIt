@@ -1,9 +1,13 @@
 """Ephemeral receipt OCR endpoint. Uploaded bytes are processed in memory only."""
+import logging
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from core.security import get_current_user_id
 from services.receipt_extraction import extract_receipt
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/receipts", tags=["receipt extraction"])
 
@@ -32,5 +36,7 @@ async def extract_receipt_endpoint(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        # Do not return OCR text, image bytes, or internal paths in API errors.
+        # Keep sensitive receipt content out of the response; retain a server-side
+        # traceback so deployment/runtime failures are diagnosable in Render logs.
+        logger.exception("Receipt OCR processing failed")
         raise HTTPException(status_code=500, detail="Receipt processing failed. Try a clearer image.") from exc
