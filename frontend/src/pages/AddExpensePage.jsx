@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,9 +6,6 @@ import { useToast } from '../components/ToastProvider';
 import equal from "../../logo/equal.png";
 import custom from "../../logo/custom.png";
 import percent from "../../logo/percent.png";
-import tick from "../../logo/tick.png";
-import link from "../../logo/link.png";
-import bill from "../../logo/bill.png";
 
 
 export default function AddExpensePage() {
@@ -29,7 +26,6 @@ export default function AddExpensePage() {
     const [paidBy, setPaidBy] = useState('');
     const [splitType, setSplitType] = useState('equal');
     const [participants, setParticipants] = useState([]); // Array of { id, selected }
-    const [fileName, setFileName] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Initial load: Fetch groups
@@ -88,11 +84,6 @@ export default function AddExpensePage() {
     const splitAmount = (selected.length > 0 && Number(amount) > 0) ? (Number(amount) / selected.length) : 0;
     // We round for display but we will send exact float to backend
     const perPerson = Math.round(splitAmount * 100) / 100;
-
-    const handleDragOver = useCallback(e => { e.preventDefault(); e.currentTarget.classList.add('border-accent', 'bg-accent-dim'); }, []);
-    const handleDragLeave = useCallback(e => { e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); }, []);
-    const handleDrop = useCallback(e => { e.preventDefault(); e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); if (e.dataTransfer.files[0]) setFileName(e.dataTransfer.files[0].name); }, []);
-    const handleFileSelect = (e) => { if (e.target.files[0]) setFileName(e.target.files[0].name); };
 
     const submit = async () => {
         const amt = parseFloat(amount);
@@ -232,23 +223,16 @@ export default function AddExpensePage() {
                         </div>
                     </div>
 
-                    {/* Receipt Upload */}
-                    <div className="bg-bg-card border border-border rounded-[20px] p-6">
-                        <div className="text-[0.95rem] font-semibold mb-4">Receipt / Proof</div>
-                        <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
-                            <input type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
-                            <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src={tick}/> : <img src={link}/>}</div>
-                            <div className="text-[0.95rem] font-semibold mb-1.5">{fileName || 'Drag & drop receipt here'}</div>
-                            <div className="text-xs text-text-muted">{fileName || 'or click to browse · PNG, JPG, PDF up to 10MB'}</div>
-                        </div>
-                        {fileName && (
-                            <div className="mt-3 flex items-center gap-2.5 bg-green-dim border border-[rgba(34,197,94,0.3)] rounded-[10px] px-3.5 py-2.5">
-                                <span><img src={bill}/></span>
-                                <span className="text-sm flex-1 truncate">{fileName}</span>
-                                <span className="text-green text-xs">✓ Ready</span>
-                            </div>
-                        )}
-                    </div>
+                    {/* Receipt OCR entry point. Standard expenses do not persist attachments. */}
+                    <section className="bg-bg-card border border-border rounded-[20px] p-6">
+                        <div className="text-[0.95rem] font-semibold mb-2">Want to scan a receipt?</div>
+                        <p className="text-sm text-text-secondary mb-4">
+                            Use itemized expense to extract bill items, quantities, tax and the printed total. The receipt is processed temporarily and is not stored.
+                        </p>
+                        <Link to="/add-expense/itemized" className="inline-flex items-center gap-2 px-4 py-3 rounded-[10px] bg-accent text-white text-sm font-semibold">
+                            Scan receipt and split by items →
+                        </Link>
+                    </section>
                 </div>
 
                 {/* Right Column */}
