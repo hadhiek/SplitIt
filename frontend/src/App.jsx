@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState } from 'react';
 import api from './api';
 import { ToastProvider } from './components/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -16,6 +16,43 @@ import AddExpensePage from './pages/AddExpensePage';
 import ItemizedExpensePage from './pages/ItemizedExpensePage';
 import SettlementsPage from './pages/SettlementsPage';
 import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
+
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('Application render error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-bg-primary p-6 text-center text-text-primary">
+          <h1 className="text-xl font-bold">Something went wrong</h1>
+          <p className="max-w-md text-sm text-text-secondary">
+            This page could not be displayed. Reload the app to try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-lg bg-accent px-5 py-3 font-semibold text-white"
+          >
+            Reload app
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
