@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predev": "node scripts/prepare-ocr-assets.mjs",
+    "prebuild": "node scripts/prepare-ocr-assets.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
