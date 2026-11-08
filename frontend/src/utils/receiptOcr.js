@@ -299,11 +299,28 @@ function parseWithoutColumns(line, warnings) {
   if (amountValues.length === 2) {
     const first = amountValues[0];
     const second = amountValues[1];
+    const rateMarked = /@\s*(?:(?:₹|Rs\.?|INR)\s*)?[-+]?\d/i.test(line.text);
+    const makeQuantityRow = (name, quantity) => {
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) return null;
+      // Without a rate/amount header, a final standalone amount is treated as
+      // the row total. Only an explicit @ marker establishes a unit rate.
+      const lineTotal = rateMarked ? quantity * second.value : second.value;
+      return makeItem(name, quantity, lineTotal, itemConfidence(line), rateMarked ? second.value : null);
+    };
+
     const suffixQuantity = line.text.match(/^(.+?)\s*[x×]\s*(\d{1,3})\s+[-+]?/i);
-    if (suffixQuantity && Number.isInteger(Number(suffixQuantity[2])) && Number(suffixQuantity[2]) >= 1 && Number(suffixQuantity[2]) <= 999) {
-      const quantity = Number(suffixQuantity[2]);
-      const unitPrice = second.value;
-      return makeItem(suffixQuantity[1], quantity, quantity * unitPrice, itemConfidence(line), unitPrice);
+    if (suffixQuantity) {
+      return makeQuantityRow(suffixQuantity[1], Number(suffixQuantity[2]));
+    }
+
+    const leadingQuantity = line.text.match(/^\s*(\d{1,3})\s*[x×]\s*(.+?)\s+[-+]?/i);
+    if (leadingQuantity) {
+      return makeQuantityRow(leadingQuantity[2], Number(leadingQuantity[1]));
+    }
+
+    const unitQuantity = line.text.match(/^(.+?)\s+(\d{1,3})\s*(?:pcs?|nos?|units?)\s+[-+]?/i);
+    if (unitQuantity) {
+      return makeQuantityRow(unitQuantity[1], Number(unitQuantity[2]));
     }
 
     const explicitQuantity = /\b\d{1,3}\s*[x×]\s*\d[\d,.]*/i.test(line.text);
@@ -317,7 +334,7 @@ function parseWithoutColumns(line, warnings) {
       } else {
         name = line.text.slice(0, first.start);
       }
-      return makeItem(name, first.value, first.value * second.value, itemConfidence(line), second.value);
+      return makeQuantityRow(name, first.value);
     }
 
     warnings.push('A receipt row has two unlabelled numeric values. Quantity and price were not guessed.');
