@@ -7,6 +7,11 @@ import { runReceiptOcr } from '../utils/receiptOcr';
 
 
 const money = (value) => `₹${(Number(value || 0)).toFixed(2)}`;
+const todayLocal = () => {
+  const value = new Date();
+  value.setMinutes(value.getMinutes() - value.getTimezoneOffset());
+  return value.toISOString().slice(0, 10);
+};
 const toCents = (value) => Math.round((Number(value) || 0) * 100);
 
 function allocateCents(totalCents, weightedPeople) {
@@ -34,7 +39,7 @@ export default function ItemizedExpensePage() {
   const [members, setMembers] = useState([]);
   const [groupId, setGroupId] = useState('');
   const [paidBy, setPaidBy] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [category, setCategory] = useState('Food & Dining');
   const [description, setDescription] = useState('');
   const [merchant, setMerchant] = useState('');
@@ -171,6 +176,7 @@ export default function ItemizedExpensePage() {
     if (!receiptFile || ocrLoading) return;
     setOcrLoading(true);
     setOcrProgress(0);
+    setOcrStage('Preparing receipt image');
     setOcrWarnings([]);
     setReceiptTotal(null);
     try {
