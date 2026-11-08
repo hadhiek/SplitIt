@@ -64,7 +64,7 @@ export default function AuthPage() {
                     <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
                         <img className="w-10 h-10" src={logo} />
                     </div>
-                    <span className="text-xl font-extrabold" className='splititTitle'>Split It</span>
+                    <span className="text-xl font-extrabold splititTitle">Split It</span>
                 </div>
 
                 <div className="relative z-[1] mt-10">
