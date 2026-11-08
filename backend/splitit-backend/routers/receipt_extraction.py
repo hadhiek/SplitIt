@@ -16,11 +16,12 @@ async def extract_receipt_endpoint(
     _user_id: str = Depends(get_current_user_id),
 ):
     """Extract structured receipt data without writing the upload or result anywhere."""
-    if file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(status_code=415, detail="Upload a JPG, PNG, or WEBP receipt image.")
-
-    contents = await file.read(MAX_RECEIPT_BYTES + 1)
-    await file.close()
+    try:
+        if file.content_type not in ALLOWED_CONTENT_TYPES:
+            raise HTTPException(status_code=415, detail="Upload a JPG, PNG, or WEBP receipt image.")
+        contents = await file.read(MAX_RECEIPT_BYTES + 1)
+    finally:
+        await file.close()
     if not contents:
         raise HTTPException(status_code=400, detail="The uploaded receipt is empty.")
     if len(contents) > MAX_RECEIPT_BYTES:
