@@ -95,7 +95,7 @@ export default function Navbar() {
 
                     {/* Dropdown Panel */}
                     {showDropdown && (
-                        <div className="absolute top-full right-0 mt-2 w-80 bg-bg-card border border-border rounded-[14px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden animate-fade-in z-[100]">
+                        <div className="absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))] bg-bg-card border border-border rounded-[14px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden animate-fade-in z-[100]">
                             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-primary/50">
                                 <span className="text-sm font-semibold">Notifications</span>
                                 {unreadCount > 0 && (
