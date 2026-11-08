@@ -170,7 +170,7 @@ export default function AddExpensePage() {
     const categories = ['Food & Dining', 'Accommodation', 'Transport', 'Entertainment', 'Shopping', 'Health', 'Bill', 'Other'];
 
     return (
-        <div className="animate-fade-in">
+        <div className="add-expense-page animate-fade-in">
             <div className="flex items-center gap-3 mb-7">
                 <Link to="/expenses" className="px-2.5 py-2.5 rounded-[10px] text-text-secondary hover:bg-white/5 hover:text-text-primary transition">←</Link>
                 <div>
@@ -180,14 +180,14 @@ export default function AddExpensePage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-5 items-start">
+            <div className="add-expense-layout grid grid-cols-2 gap-5 items-start">
                 {/* Left Column */}
                 <div className="flex flex-col gap-6">
                     {/* Amount Input */}
-                    <div className="text-center p-9 bg-bg-card border border-border rounded-[20px]">
+                    <div className="expense-amount-card text-center p-9 bg-bg-card border border-border rounded-[20px]">
                         <div>
                             <span className="text-4xl font-light text-text-muted align-top mt-3 inline-block">₹</span>
-                            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" className="bg-transparent border-none outline-none text-6xl font-extrabold text-text-primary w-[280px] text-center tracking-[-2px]" />
+                            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" className="expense-amount-input bg-transparent border-none outline-none text-6xl font-extrabold text-text-primary w-[280px] max-w-[70vw] text-center tracking-[-2px]" />
                         </div>
                         <div className="text-text-muted text-sm mt-2">Enter expense amount</div>
                     </div>
@@ -199,7 +199,7 @@ export default function AddExpensePage() {
                             <label className="block text-sm text-text-secondary font-medium mb-2">Description</label>
                             <input type="text" value={desc} onChange={e => setDesc(e.target.value)} placeholder="e.g., Hotel booking, Dinner..." className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition placeholder:text-text-muted" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4 mb-5">
+                        <div className="grid grid-cols-2 gap-4 mb-5 expense-form-pair">
                             <div>
                                 <label className="block text-sm text-text-secondary font-medium mb-2">Category</label>
                                 <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition cursor-pointer appearance-none">
@@ -214,7 +214,7 @@ export default function AddExpensePage() {
                                 </select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4 expense-form-pair">
                             <div>
                                 <label className="block text-sm text-text-secondary font-medium mb-2">Date</label>
                                 <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent transition" />
@@ -235,7 +235,7 @@ export default function AddExpensePage() {
                     {/* Receipt Upload */}
                     <div className="bg-bg-card border border-border rounded-[20px] p-6">
                         <div className="text-[0.95rem] font-semibold mb-4">Receipt / Proof</div>
-                        <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
+                        <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className="receipt-dropzone border-2 border-dashed border-border rounded-[20px] py-12 px-8 text-center cursor-pointer transition-all relative hover:border-accent hover:bg-accent-dim">
                             <input type="file" accept="image/*,.pdf" onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" />
                             <div className="flex items-center justify-center text-4xl mb-4">{fileName ? <img src={tick}/> : <img src={link}/>}</div>
                             <div className="text-[0.95rem] font-semibold mb-1.5">{fileName || 'Drag & drop receipt here'}</div>
