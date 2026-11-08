@@ -47,6 +47,7 @@ DISCOUNT_RE = re.compile(r"\b(?:discount|coupon|savings|less)\b", re.I)
 TOTAL_LABELS = (
     (100, re.compile(r"\bgrand\s+total\b", re.I)),
     (95, re.compile(r"\b(?:amount|net)\s+(?:payable|due)\b", re.I)),
+    (95, re.compile(r"\bpayable\s+amount\b", re.I)),
     (90, re.compile(r"\btotal\s+(?:payable|due|amount)\b", re.I)),
     (85, re.compile(r"\b(?:bill|invoice)\s+total\b", re.I)),
     (75, re.compile(r"\bnet\s+total\b", re.I)),
@@ -228,6 +229,11 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
         prefix = normalized[:previous_match.start()].rstrip()
         qty_x = re.search(r"\b(\d{1,3})\s*[x×]\s*$", prefix, re.I)
         qty_plain = re.search(r"(?:^|\s)(\d{1,3})\s*$", prefix)
+        unit_rate_only = re.search(
+            r"^\s*[x×]\s*$",
+            normalized[previous_match.end():last_match.start()],
+            re.I,
+        )
         if qty_x:
             quantity = max(1, int(qty_x.group(1)))
             body = prefix[:qty_x.start()].strip()
@@ -236,6 +242,12 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
             quantity = max(1, int(qty_plain.group(1)))
             body = prefix[:qty_plain.start()].strip()
             candidate_rate = previous_amount
+        elif unit_rate_only and previous_amount == previous_amount.to_integral_value() and previous_amount > 0:
+            # "Tea 2 x 50.00" has a unit rate but no explicit line-total column.
+            quantity = int(previous_amount)
+            body = prefix.strip(" :-|*•")
+            candidate_rate = raw_total
+            raw_total = (candidate_rate * quantity).quantize(CENT, rounding=ROUND_HALF_UP)
 
     if candidate_rate is None:
         name, quantity = _parse_quantity_and_name(body)
