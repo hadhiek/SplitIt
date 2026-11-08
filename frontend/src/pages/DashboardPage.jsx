@@ -263,7 +263,7 @@ export default function DashboardPage() {
                             <div className="text-xs text-text-muted mt-0.5">Requests from others</div>
                         </div>
                         <span className={`inline-flex items-center gap-[5px] px-2.5 py-[3px] rounded-full text-xs font-semibold ${summary?.pending_approvals_count > 0 ? 'bg-yellow-dim text-yellow' : 'bg-gray-dim text-text-muted'}`}>
-                            {summary?.pending_approvals_count || 0} pending
+                            {summary ? summary.pending_approvals_count : '—'} pending
                         </span>
                     </div>
                     {!summary ? (
