@@ -117,21 +117,23 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/groups" element={<GroupsPage />} />
-              <Route path="/groups/:id" element={<GroupDetailPage />} />
-              <Route path="/groups/:id/settlements" element={<SettlementsPage />} />
-              <Route path="/settlements" element={<GlobalSettlementsPage />} />
-              <Route path="/expenses" element={<ExpensesPage />} />
-              <Route path="/add-expense" element={<AddExpensePage />} />
-              <Route path="/add-expense/itemized" element={<ItemizedExpensePage />} />
-            </Route>
-          </Routes>
+          <AppErrorBoundary>
+            <Routes>
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/groups" element={<GroupsPage />} />
+                <Route path="/groups/:id" element={<GroupDetailPage />} />
+                <Route path="/groups/:id/settlements" element={<SettlementsPage />} />
+                <Route path="/settlements" element={<GlobalSettlementsPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/add-expense" element={<AddExpensePage />} />
+                <Route path="/add-expense/itemized" element={<ItemizedExpensePage />} />
+              </Route>
+            </Routes>
+          </AppErrorBoundary>
         </BrowserRouter>
       </ToastProvider>
     </AuthProvider>
