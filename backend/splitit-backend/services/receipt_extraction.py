@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import io
 from functools import lru_cache
+from threading import Lock
 from typing import Any
 
 import numpy as np
@@ -17,6 +18,7 @@ from services.receipt_parser import MAX_ITEMS, parse_receipt_lines
 
 
 MAX_IMAGE_PIXELS = 25_000_000
+_OCR_LOCK = Lock()
 
 
 @lru_cache(maxsize=1)
@@ -116,7 +118,10 @@ def _join_ocr_lines(results: list[Any]) -> tuple[list[str], list[float]]:
 def extract_receipt(image_bytes: bytes) -> dict[str, Any]:
     """Run OCR and return a reviewable, structured receipt draft."""
     image = _prepare_image(image_bytes)
-    result, elapsed = _ocr_engine()(image)
+    # The cached pipeline is shared within this worker. Serialize calls to avoid
+    # mutable preprocessing state being shared across concurrent requests.
+    with _OCR_LOCK:
+        result, elapsed = _ocr_engine()(image)
     lines, confidences = _join_ocr_lines(result or [])
     if not lines:
         raise ValueError("No readable text found. Try a sharper, well-lit image.")
