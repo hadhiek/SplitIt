@@ -160,9 +160,9 @@ export default function GroupDetailPage() {
     const tabs = isAdmin ? ['members', 'expenses', 'loans', 'requests', 'settlements'] : ['members', 'expenses', 'loans', 'settlements'];
 
     return (
-        <div className="animate-fade-in">
+        <div className="group-detail-page animate-fade-in">
             {/* Header */}
-            <div className="flex items-center gap-3 justify-between mb-7">
+            <div className="group-detail-header flex items-center gap-3 justify-between mb-7">
                 <div className="flex items-center gap-3">
                     <Link to="/groups" className="inline-flex items-center px-2.5 py-2.5 rounded-[10px] text-text-secondary hover:bg-white/5 hover:text-text-primary transition">←</Link>
                     <div>
@@ -182,7 +182,7 @@ export default function GroupDetailPage() {
                         <p className="text-text-secondary text-sm mt-1">{memberCount} Members</p>
                     </div>
                 </div>
-                <div className="flex gap-2.5">
+                <div className="group-detail-actions flex gap-2.5">
                     <button className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"> <img src={settings}/> Settings</button>
                     {isAdmin && group.is_active !== false && (
                         <button 
@@ -223,8 +223,8 @@ export default function GroupDetailPage() {
             )}
 
             {/* Stats Row */}
-            <div className="bg-bg-card border border-border rounded-[20px] px-6 py-5 mb-6">
-                <div className="flex gap-6 items-center px-6">
+            <div className="group-detail-stats bg-bg-card border border-border rounded-[20px] px-6 py-5 mb-6">
+                <div className="group-detail-stats__row flex gap-6 items-center px-6">
                     {[
                         { label: 'Total Spent', value: `₹${balances?.total_spent || 0}` },
                         { label: 'You Paid', value: `₹${balances?.user_paid || 0}`, cls: 'text-green' },
@@ -251,7 +251,7 @@ export default function GroupDetailPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-bg-card border border-border rounded-[14px] p-1 w-fit mb-7">
+            <div className="group-detail-tabs flex gap-1 bg-bg-card border border-border rounded-[14px] p-1 w-fit mb-7">
                     {tabs.map(t => (
                         <button key={t} onClick={() => setActiveTab(t)} className={`px-5 py-2 rounded-[10px] text-sm font-semibold transition capitalize ${activeTab === t ? 'bg-accent text-white' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'}`}>
                             {t === 'expenses' ? <img src={bill}/> : t === 'members' ? <img src={groupIcon}/> : t === 'requests' ? <img src={requestIcon}/> : t === 'loans' ? <img src={loan}/> : <img src={settlement}/>} <div className='mt-3'>{t}</div>
