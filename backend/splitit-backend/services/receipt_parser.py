@@ -234,6 +234,8 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
             normalized[previous_match.end():last_match.start()],
             re.I,
         )
+        qty_leading = re.match(r"^\s*(\d{1,3})\s*[x×]?\s+(.+)$", prefix)
+        qty_suffix_x = re.match(r"^(.+?)\s*[x×]\s*(\d{1,3})\s*$", prefix, re.I)
         if qty_x:
             quantity = max(1, int(qty_x.group(1)))
             body = prefix[:qty_x.start()].strip()
@@ -241,6 +243,14 @@ def _item_from_line(line: str, confidence: float) -> dict | None:
         elif qty_plain:
             quantity = max(1, int(qty_plain.group(1)))
             body = prefix[:qty_plain.start()].strip()
+            candidate_rate = previous_amount
+        elif qty_leading:
+            quantity = max(1, int(qty_leading.group(1)))
+            body = qty_leading.group(2).strip()
+            candidate_rate = previous_amount
+        elif qty_suffix_x:
+            quantity = max(1, int(qty_suffix_x.group(2)))
+            body = qty_suffix_x.group(1).strip()
             candidate_rate = previous_amount
         elif unit_rate_only and previous_amount == previous_amount.to_integral_value() and previous_amount > 0:
             # "Tea 2 x 50.00" has a unit rate but no explicit line-total column.
@@ -309,6 +319,8 @@ def parse_receipt_lines(
     for index, line in enumerate(lines):
         amount = _last_amount(line)
         kind, priority = _summary_kind(line)
+        if kind == "tax" and re.search(r"\\btax\\s+invoice\\b", line, re.I):
+            kind = None
         if amount is not None and kind == "subtotal":
             if amount >= 0:
                 subtotal_candidates.append(amount)
