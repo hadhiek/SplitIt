@@ -10,3 +10,4 @@ python-multipart
 Pillow
 numpy
 rapidocr-onnxruntime
+greenlet
