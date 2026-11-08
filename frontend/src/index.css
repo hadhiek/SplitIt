@@ -189,3 +189,243 @@
 .animate-shake {
   animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
+
+/* Responsive application shell and mobile navigation */
+.app-main {
+  min-width: 0;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .app-shell {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .app-shell > aside {
+    display: none !important;
+  }
+
+  .app-content {
+    width: 100%;
+    margin-left: 0 !important;
+    min-width: 0;
+  }
+
+  .app-main {
+    padding: 5rem 1rem calc(6.25rem + env(safe-area-inset-bottom)) !important;
+    width: 100%;
+  }
+
+  .app-navbar {
+    left: 0 !important;
+    right: 0 !important;
+    height: 3.75rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .app-navbar h2 {
+    font-size: 1rem !important;
+    line-height: 1.25rem;
+  }
+
+  .app-navbar__search {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    z-index: 120;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: end;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: calc(4.25rem + env(safe-area-inset-bottom));
+    padding: 0.45rem 0.35rem calc(0.45rem + env(safe-area-inset-bottom));
+    background: rgba(16, 19, 28, 0.96);
+    border-top: 1px solid var(--color-border);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-bottom-nav__item {
+    min-width: 0;
+    min-height: 3.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: var(--color-text-muted);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-bottom-nav__item.is-active {
+    color: var(--color-accent-light);
+  }
+
+  .mobile-bottom-nav__icon {
+    display: grid;
+    place-items: center;
+    min-width: 1.5rem;
+    height: 1.55rem;
+    font-size: 1.3rem;
+    line-height: 1;
+    font-weight: 600;
+  }
+
+  .mobile-bottom-nav__label {
+    font-size: 0.66rem;
+    line-height: 1;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .mobile-bottom-nav__item--primary .mobile-bottom-nav__icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-top: -1rem;
+    border-radius: 0.85rem;
+    background: var(--color-accent);
+    color: white;
+    box-shadow: 0 5px 18px rgba(99, 102, 241, 0.35);
+    font-size: 1.65rem;
+  }
+
+  .mobile-bottom-nav__item--primary .mobile-bottom-nav__label {
+    color: var(--color-text-secondary);
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-content {
+    margin-left: 15rem;
+  }
+
+  .app-main {
+    padding: 5rem 1.5rem 2rem;
+  }
+}
+
+
+/* Mobile layouts for page content, cards, forms and data views */
+@media (max-width: 767px) {
+  .auth-layout {
+    min-height: 100dvh;
+  }
+
+  .auth-hero {
+    display: none !important;
+  }
+
+  .auth-form-panel {
+    min-height: 100dvh;
+    padding: 1.25rem !important;
+    align-items: flex-start;
+    padding-top: max(2rem, env(safe-area-inset-top)) !important;
+  }
+
+  .auth-signup-fields {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 0 !important;
+  }
+
+  .app-main .grid.grid-cols-2,
+  .app-main .grid.grid-cols-3,
+  .app-main .grid.grid-cols-4 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-main [class~="p-6"],
+  .app-main [class~="p-8"],
+  .app-main [class~="p-12"] {
+    padding: 1rem !important;
+  }
+
+  .app-main h1 {
+    font-size: clamp(1.35rem, 6vw, 1.75rem);
+    line-height: 1.2;
+  }
+
+  .app-main .flex.items-center.justify-between {
+    flex-wrap: wrap;
+  }
+
+  .app-main table {
+    min-width: 34rem;
+  }
+
+  .app-main img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .app-main input,
+  .app-main select,
+  .app-main textarea {
+    max-width: 100%;
+  }
+
+  .app-main .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-main button,
+  .app-main a {
+    min-height: 2.5rem;
+  }
+
+  .app-main input[type="file"] {
+    font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .auth-layout {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  }
+
+  .auth-hero {
+    padding: 2rem !important;
+  }
+
+  .auth-form-panel {
+    padding: 2rem !important;
+  }
+}

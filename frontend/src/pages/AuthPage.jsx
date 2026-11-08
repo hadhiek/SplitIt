@@ -54,9 +54,9 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-screen grid grid-cols-2 bg-bg-primary">
+        <div className="auth-layout min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-bg-primary">
             {/* Left Panel */}
-            <div className="bg-gradient-to-br from-[#0f1624] to-[#1a1040] p-15 flex flex-col justify-between relative overflow-hidden">
+            <div className="auth-hero bg-gradient-to-br from-[#0f1624] to-[#1a1040] p-15 flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(99,102,241,0.25)_0%,transparent_70%)]" />
                 <div className="absolute bottom-[-100px] left-[-100px] w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(96,165,250,0.15)_0%,transparent_70%)]" />
 
@@ -83,7 +83,7 @@ export default function AuthPage() {
             </div>
 
             {/* Right Panel */}
-            <div className="flex items-center justify-center p-10">
+            <div className="auth-form-panel flex items-center justify-center p-10">
                 <div className="w-full max-w-[440px]">
                     <div className="flex items-center gap-2.5 mb-8">
                         <div className="mr-2 w-12 h-12 bg-gradient-to-br from-gray-600 to-black rounded-[10px] flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function AuthPage() {
                         </form>
                     ) : (
                         <form onSubmit={handleSignup}>
-                            <div className="grid grid-cols-2 gap-4 mb-5">
+                            <div className="auth-signup-fields grid grid-cols-2 gap-4 mb-5">
                                 <div>
                                     <label className="block text-sm text-text-secondary font-medium mb-2">First Name</label>
                                     <input type="text" value={signupData.first} onChange={e => setSignupData(p => ({ ...p, first: e.target.value }))} placeholder="Priya" className="w-full bg-bg-input border border-border text-text-primary px-4 py-3 rounded-[10px] text-[0.95rem] outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition placeholder:text-text-muted" />
