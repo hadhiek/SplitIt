@@ -4,13 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "npm run prepare:ocr && vite",
+    "build": "npm run prepare:ocr && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predev": "node scripts/prepare-ocr-assets.mjs",
-    "prebuild": "node scripts/prepare-ocr-assets.mjs",
-    "test:receipt-ocr": "node --test src/utils/receiptOcr.test.js"
+    "test:receipt-ocr": "node --test src/utils/receiptOcr.test.js",
+    "prepare:ocr": "node scripts/prepare-ocr-assets.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
