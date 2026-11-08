@@ -115,6 +115,29 @@ class ReceiptParserTests(unittest.TestCase):
         self.assertEqual(result["line_items"][0]["line_total"], 100.0)
         self.assertEqual(result["total_amount"], 100.0)
 
+
+    def test_quantity_before_item_name_and_header_invoice_number(self):
+        result = parse_receipt_lines(
+            [
+                "CORNER SHOP",
+                "Tax Invoice 123456",
+                "2 x Tea 50.00 100.00",
+                "Coffee 3 20.00 60.00",
+                "Grand Total 160.00",
+            ],
+            [0.9] * 5,
+        )
+        self.assertIsNone(result["tax"])
+        self.assertEqual(len(result["line_items"]), 2)
+        self.assertEqual(result["line_items"][0]["name"], "Tea")
+        self.assertEqual(result["line_items"][0]["quantity"], 2)
+        self.assertEqual(result["line_items"][0]["unit_price"], 50.0)
+        self.assertEqual(result["line_items"][0]["line_total"], 100.0)
+        self.assertEqual(result["line_items"][1]["name"], "Coffee")
+        self.assertEqual(result["line_items"][1]["quantity"], 3)
+        self.assertEqual(result["line_items"][1]["unit_price"], 20.0)
+        self.assertEqual(result["total_amount"], 160.0)
+
     def test_confidence_is_carried_to_items(self):
         result = parse_receipt_lines(
             ["CAFE", "Coffee 20.00"],
