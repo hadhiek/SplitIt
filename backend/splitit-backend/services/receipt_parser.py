@@ -126,15 +126,14 @@ def _normalise_date(lines: Sequence[str]) -> str | None:
     return None
 
 
-def _currency(lines: Sequence[str]) -> str:
+def _currency_details(lines: Sequence[str]) -> tuple[str, bool]:
     text = " ".join(lines)
     for pattern, code in CURRENCY_MARKERS:
         if pattern.search(text):
-            return code
-    # SplitIt currently presents amounts in INR. This is a fallback, not OCR
-    # evidence that the source receipt was definitely issued in INR.
-    return "INR"
-
+            return code, True
+    # India-first fallback for bills without a visible currency marker. The
+    # response includes currency_detected=False so the UI asks users to verify.
+    return "INR", False
 
 def _merchant_name(lines: Sequence[str]) -> str | None:
     for raw in lines[:8]:
@@ -369,6 +368,10 @@ def parse_receipt_lines(
     overall_confidence = (
         sum(item_confidences) / len(item_confidences) if item_confidences else None
     )
+    currency, currency_detected = _currency_details(lines)
+    if not currency_detected:
+        warnings.append("No currency symbol was detected. INR is assumed; verify the currency on the bill.")
+
     return {
         "merchant_name": _merchant_name(lines),
         "date": _normalise_date(lines),
@@ -379,7 +382,8 @@ def parse_receipt_lines(
         "discount": _money_float(discount),
         "total_amount": _money_float(total),
         "total_amount_source": total_source,
-        "currency": _currency(lines),
+        "currency": currency,
+        "currency_detected": currency_detected,
         "confidence": round(overall_confidence, 3) if overall_confidence is not None else None,
         "warnings": list(dict.fromkeys(warnings)),
     }
