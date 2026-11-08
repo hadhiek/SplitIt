@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy import func as sqlfunc
 from typing import List
 import uuid
 from uuid import UUID
@@ -12,7 +11,7 @@ from datetime import datetime, timezone
 
 from core.database import get_db
 from core.security import get_current_user_id
-from models.domain import Group, GroupMember, JoinRequest, Notification, Expense
+from models.domain import Group, GroupMember, JoinRequest, Notification, Expense, Settlement
 from schemas.dto import (
     GroupCreate, GroupOut, GroupDetailOut,
     JoinGroupIn, JoinRequestOut, JoinRequestAction
@@ -34,7 +33,6 @@ async def list_user_groups(
 ):
     user_uuid = uuid.UUID(user_id)
     # Fetch groups with members and expenses
-    from models.domain import Expense, ExpenseSplit, Settlement
     result = await db.execute(
         select(Group)
         .join(GroupMember)
@@ -169,7 +167,6 @@ async def delete_group(
     user_uuid = uuid.UUID(user_id)
 
     # 1. Fetch group with members, expenses, and settlements
-    from models.domain import Expense, ExpenseSplit, Settlement
     result = await db.execute(
         select(Group)
         .options(
