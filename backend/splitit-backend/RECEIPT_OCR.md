@@ -1,41 +1,67 @@
-# Temporary receipt extraction
+# Receipt extraction and itemized expenses
 
-The itemized-expense screen sends the selected JPG, PNG, or WEBP image to the authenticated `POST /api/receipts/extract` endpoint.
+The itemized-expense screen sends a selected JPG, PNG, or WEBP image to the authenticated `POST /api/receipts/extract` endpoint.
 
-## Runtime
+## Processing pipeline
 
-Install backend dependencies from `backend/splitit-backend`:
+1. FastAPI accepts only JPEG, PNG, and WEBP uploads, reads at most 10 MB plus one byte, and always closes the temporary upload.
+2. Pillow applies EXIF orientation, pixel-count limits, resizing, contrast enhancement, and sharpening in memory.
+3. RapidOCR (ONNX Runtime) detects text boxes, text and confidence scores. The server groups detections into physical receipt rows while retaining mean confidence.
+4. A separate, dependency-light parser interprets merchant, date, currency, item rows, quantities, unit prices, subtotal, taxes, discounts and printed total.
+5. The API returns an editable draft. It does not create files, database rows, storage objects, or OCR history.
 
-```bash
-pip install -r requirements.txt
-```
+The ONNX OCR model is cached once per worker. OCR calls on that worker are serialized. Receipt-specific bytes and text are not cached.
 
-RapidOCR initializes its ONNX model on the first extraction request. The model is kept in process memory for reuse; receipt-specific data is not cached.
+## Response fields
 
-## Data handling
+The response includes:
 
-- The endpoint validates MIME type and enforces a 10 MB limit.
-- Image bytes are read for the request, preprocessed in memory, passed to RapidOCR, parsed, and returned as JSON.
-- The endpoint does not create receipt files, database rows, storage objects, or OCR history.
-- The endpoint closes the uploaded file after reading it. FastAPI/Starlette may use a temporary spooled upload internally while receiving multipart data; it is closed after the request and is not retained as an application file.
-- The returned line items remain in the React form state for user review. The existing expense submission sends only the expense total and participant splits; it does not send the image or extracted OCR payload.
+- `merchant_name`, `date` (ISO `YYYY-MM-DD`), and `currency`.
+- `currency_detected` to distinguish a visible currency marker from the India-first INR fallback.
+- `line_items[]`: `name`, `quantity`, `unit_price`, `line_total`, and OCR `confidence`.
+- `subtotal`, `subtotal_source`, `tax`, `discount`, `total_amount`, and `total_amount_source`.
+- Overall item confidence, processing duration, OCR engine and parser warnings.
 
-## Response shape
+Example:
 
 ```json
 {
   "merchant_name": "Example Cafe",
-  "date": "03/11/2026",
+  "date": "2026-11-03",
   "line_items": [
-    { "name": "Coffee", "quantity": 1, "unit_price": 120.0, "line_total": 120.0 }
+    { "name": "Coffee", "quantity": 2, "unit_price": 60.0, "line_total": 120.0, "confidence": 0.96 }
   ],
   "subtotal": 120.0,
+  "subtotal_source": "printed",
   "tax": 6.0,
   "discount": null,
   "total_amount": 126.0,
+  "total_amount_source": "printed",
   "currency": "INR",
+  "currency_detected": true,
   "warnings": []
 }
 ```
 
-OCR is heuristic. Users must verify extracted names, quantities, tax, discounts, and prices before saving an expense.
+## Accuracy and user confirmation
+
+Receipt layouts are not standardised. The parser handles common POS-style rows, quantity/rate/line-total columns, Indian and Western comma grouping, date formats, GST components, discounts, and summary totals. It uses OCR positions and confidence rather than treating every trailing number as a price.
+
+This is still heuristic parsing, not a trained receipt-understanding model. It flags low-confidence or unreconciled values rather than silently claiming certainty. The itemized screen shows the printed total and blocks saving while the editable item/tax/discount calculation differs from that printed total. Review every item and participant assignment.
+
+For an unfamiliar currency, OCR results are not auto-applied to the INR form; convert the values manually first. If a currency marker is absent, INR is assumed with a warning.
+
+## Persistence and privacy
+
+The image is sent to the backend for temporary extraction. It is not uploaded to Supabase Storage and no extracted OCR payload is stored. The expense submission sends only the final description, total, date, group and participant split amounts. Receipt attachments are not currently retained with saved expenses.
+
+## Tests
+
+Run the parser tests without installing the OCR model:
+
+```bash
+cd backend/splitit-backend
+python -m unittest discover -s tests -v
+```
+
+The parser test suite is also run by the GitHub Actions workflow for this receipt branch.
