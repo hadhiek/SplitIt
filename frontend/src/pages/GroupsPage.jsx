@@ -196,13 +196,13 @@ export default function GroupsPage() {
     const historyGroups = groups.filter(g => g.is_active === false);
 
     return (
-        <div className="animate-fade-in pb-12">
-            <div className="flex items-center justify-between mb-7">
+        <div className="groups-page animate-fade-in pb-12">
+            <div className="groups-page-header flex items-center justify-between mb-7">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">My Groups</h1>
                     <p className="text-text-secondary text-sm mt-1">{activeGroups.length} active groups</p>
                 </div>
-                <div className="flex gap-2.5">
+                <div className="groups-page-actions flex gap-2.5">
                     <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"><img src={link}/> Join Group</button>
                     <button onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] transition"><img src={accomodation}/>Create Group</button>
                 </div>
