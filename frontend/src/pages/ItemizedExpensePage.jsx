@@ -47,6 +47,7 @@ export default function ItemizedExpensePage() {
   const [receiptPreview, setReceiptPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrProgress, setOcrProgress] = useState(0);
+  const [ocrStage, setOcrStage] = useState('');
   const [receiptTotal, setReceiptTotal] = useState(null);
   const [ocrWarnings, setOcrWarnings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -174,7 +175,10 @@ export default function ItemizedExpensePage() {
     setReceiptTotal(null);
     try {
       // OCR and parsing run in this browser. The receipt image is never uploaded to Render.
-      const data = await runReceiptOcr(receiptFile, setOcrProgress);
+      const data = await runReceiptOcr(receiptFile, (progress, stage) => {
+        setOcrProgress(progress);
+        if (stage) setOcrStage(stage);
+      });
       const parsedItems = (data.line_items || []).filter((item) =>
         item.name && Number(item.quantity) > 0 && Number(item.unit_price) > 0
       );
@@ -197,8 +201,8 @@ export default function ItemizedExpensePage() {
           participantIds: selectedParticipants.map((person) => person.id),
         })));
         setNextItemId(Date.now() + parsedItems.length + 1);
-        if (data.tax != null) setTax(String(Number(data.tax).toFixed(2)));
-        if (data.discount != null) setDiscount(String(Number(data.discount).toFixed(2)));
+        setTax(data.tax != null ? String(Number(data.tax).toFixed(2)) : '0');
+        setDiscount(data.discount != null ? String(Number(data.discount).toFixed(2)) : '0');
         if (data.merchant_name) {
           setMerchant((current) => current || data.merchant_name);
           setDescription((current) => current || `Receipt - ${data.merchant_name}`);
@@ -214,6 +218,7 @@ export default function ItemizedExpensePage() {
     } finally {
       setOcrLoading(false);
       setOcrProgress(0);
+      setOcrStage('');
     }
   };
 
@@ -302,7 +307,7 @@ export default function ItemizedExpensePage() {
               {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-                  {ocrLoading ? `Scanning on device… ${ocrProgress}%` : 'Extract items from receipt'}
+                  {ocrLoading ? `${ocrStage || 'Scanning on device'}… ${ocrProgress}%` : 'Extract items from receipt'}
                 </button>
                 {receiptFile && <button type="button" onClick={() => { setReceiptFile(null); setReceiptTotal(null); setOcrWarnings([]); }} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
               </div>
