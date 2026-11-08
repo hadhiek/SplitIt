@@ -5,6 +5,7 @@ import { ToastProvider } from './components/ToastProvider';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
+import MobileNav from './components/MobileNav';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -18,28 +19,26 @@ import GlobalSettlementsPage from './pages/GlobalSettlementsPage';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/auth" />;
-  }
+  if (!user) return <Navigate to="/auth" />;
   return children;
 }
 
 function AppLayout() {
   useEffect(() => {
-    // Sync user to backend on authenticated load
     api.get('/api/users/me').catch(console.error);
   }, []);
 
   return (
     <ProtectedRoute>
-      <div className="flex min-h-screen">
+      <div className="app-shell flex min-h-screen">
         <Sidebar />
-        <div className="flex-1 ml-60">
+        <div className="app-content flex-1 ml-60 min-w-0">
           <Navbar />
-          <main className="pt-16 p-8">
+          <main className="app-main pt-16 p-8">
             <Outlet />
           </main>
         </div>
+        <MobileNav />
       </div>
     </ProtectedRoute>
   );
@@ -51,11 +50,8 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public routes (no sidebar) */}
             <Route path="/landing" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-
-            {/* App routes (with sidebar + navbar layout) */}
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
