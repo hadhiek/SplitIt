@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,9 +6,6 @@ import { useToast } from '../components/ToastProvider';
 import equal from "../../logo/equal.png";
 import custom from "../../logo/custom.png";
 import percent from "../../logo/percent.png";
-import tick from "../../logo/tick.png";
-import link from "../../logo/link.png";
-import bill from "../../logo/bill.png";
 
 
 export default function AddExpensePage() {
@@ -29,7 +26,6 @@ export default function AddExpensePage() {
     const [paidBy, setPaidBy] = useState('');
     const [splitType, setSplitType] = useState('equal');
     const [participants, setParticipants] = useState([]); // Array of { id, selected }
-    const [fileName, setFileName] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Initial load: Fetch groups
@@ -88,11 +84,6 @@ export default function AddExpensePage() {
     const splitAmount = (selected.length > 0 && Number(amount) > 0) ? (Number(amount) / selected.length) : 0;
     // We round for display but we will send exact float to backend
     const perPerson = Math.round(splitAmount * 100) / 100;
-
-    const handleDragOver = useCallback(e => { e.preventDefault(); e.currentTarget.classList.add('border-accent', 'bg-accent-dim'); }, []);
-    const handleDragLeave = useCallback(e => { e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); }, []);
-    const handleDrop = useCallback(e => { e.preventDefault(); e.currentTarget.classList.remove('border-accent', 'bg-accent-dim'); if (e.dataTransfer.files[0]) setFileName(e.dataTransfer.files[0].name); }, []);
-    const handleFileSelect = (e) => { if (e.target.files[0]) setFileName(e.target.files[0].name); };
 
     const submit = async () => {
         const amt = parseFloat(amount);

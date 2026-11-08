@@ -44,7 +44,7 @@ export default function ItemizedExpensePage() {
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
-  const [ocrProgress, setOcrProgress] = useState(0);
+  const [receiptTotal, setReceiptTotal] = useState(null);
   const [ocrWarnings, setOcrWarnings] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -149,8 +149,9 @@ export default function ItemizedExpensePage() {
 
   const handleReceipt = (file) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showToast('error', 'Image required', 'Choose a JPG, PNG, or WEBP image smaller than 10 MB.');
+    const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (!allowedTypes.has(file.type)) {
+      showToast('error', 'Unsupported image', 'Choose a JPG, PNG, or WEBP receipt image.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -158,25 +159,38 @@ export default function ItemizedExpensePage() {
       return;
     }
     setReceiptFile(file);
+    setOcrWarnings([]);
+    setReceiptTotal(null);
   };
 
   const extractReceipt = async () => {
     if (!receiptFile) return;
     setOcrLoading(true);
-    setOcrProgress(10);
     setOcrWarnings([]);
     try {
       const formData = new FormData();
       formData.append('file', receiptFile);
-      setOcrProgress(25);
       const response = await api.post('/api/receipts/extract', formData, {
         timeout: 120000,
       });
-      setOcrProgress(100);
       const data = response.data || {};
       const parsedItems = (data.line_items || []).filter((item) => item.name && Number(item.unit_price) >= 0);
-      setOcrWarnings(data.warnings || []);
-      if (parsedItems.length) {
+      const warnings = Array.isArray(data.warnings) ? [...data.warnings] : [];
+      const currency = data.currency || 'INR';
+      if (currency !== 'INR') {
+        warnings.push(`This receipt is in ${currency}, but SplitIt currently records amounts in INR. Convert the values manually before saving.`);
+      } else if (data.currency_detected === false) {
+        const currencyWarning = 'No currency symbol was detected. INR is assumed; verify the currency on the bill.';
+        if (!warnings.includes(currencyWarning)) warnings.push(currencyWarning);
+      }
+      setOcrWarnings(warnings);
+      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
+      if (currency === 'INR' && data.total_amount_source === 'printed' && data.total_amount != null) {
+        setReceiptTotal(toCents(data.total_amount));
+      } else {
+        setReceiptTotal(null);
+      }
+      if (currency === 'INR' && parsedItems.length) {
         setItems(parsedItems.map((item, index) => ({
           id: Date.now() + index,
           name: item.name,
@@ -192,6 +206,8 @@ export default function ItemizedExpensePage() {
           setDescription((current) => current || `Receipt - ${data.merchant_name}`);
         }
         showToast('success', 'Receipt scanned', `Found ${parsedItems.length} possible line items. Review every item, quantity and price before saving.`);
+      } else if (currency !== 'INR') {
+        showToast('warning', 'Currency conversion needed', 'The receipt is not in INR. Convert its amounts manually before saving.');
       } else {
         showToast('error', 'No line items detected', 'You can still enter the items manually. Try a sharper, well-lit image.');
       }
@@ -223,6 +239,10 @@ export default function ItemizedExpensePage() {
     }
     if (discountCents > itemSubtotalCents + taxCents) {
       showToast('error', 'Discount is too large', 'The discount cannot exceed the items subtotal plus tax/service charge.');
+      return;
+    }
+    if (receiptTotal != null && Math.abs(totalCents - receiptTotal) > 1) {
+      showToast('error', 'Bill total mismatch', `Your calculated total is ${money(total)} but the printed bill total is ${money(receiptTotal / 100)}. Correct the items, tax or discount before saving.`);
       return;
     }
     if (totalCents <= 0) {
@@ -284,9 +304,9 @@ export default function ItemizedExpensePage() {
               {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-                  {ocrLoading ? `Scanning… ${ocrProgress}%` : 'Extract items from receipt'}
+                  {ocrLoading ? 'Scanning receipt…' : 'Extract items from receipt'}
                 </button>
-                {receiptFile && <button type="button" onClick={() => setReceiptFile(null)} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
+                {receiptFile && <button type="button" onClick={() => { setReceiptFile(null); setReceiptTotal(null); setOcrWarnings([]); }} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
@@ -391,6 +411,14 @@ export default function ItemizedExpensePage() {
               <div className="flex justify-between text-text-secondary"><span>Items subtotal</span><span>{money(itemSubtotalCents / 100)}</span></div>
               <div className="flex justify-between text-text-secondary"><span>Tax / service</span><span>{money(taxCents / 100)}</span></div>
               <div className="flex justify-between text-text-secondary"><span>Discount</span><span>−{money(discountCents / 100)}</span></div>
+              {receiptTotal != null && (
+                <div className="flex justify-between gap-3 text-sm text-text-secondary">
+                  <span>Printed bill total</span><strong>{money(receiptTotal / 100)}</strong>
+                </div>
+              )}
+              {receiptTotal != null && Math.abs(totalCents - receiptTotal) > 1 && (
+                <p role="alert" className="text-xs text-amber-400">Difference to reconcile: {money((totalCents - receiptTotal) / 100)}. Saving is blocked until the itemized total matches the printed bill total.</p>
+              )}
               <div className="flex justify-between border-t border-border pt-3 text-base font-bold"><span>Total</span><span>{money(total)}</span></div>
             </div>
             <div className="mt-5 space-y-2">
