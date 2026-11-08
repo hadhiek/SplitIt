@@ -88,7 +88,7 @@ export default function SettlementsPage() {
     const totalToSettle = optimizedSettlements.reduce((sum, s) => sum + s.amount, 0);
 
     return (
-        <div className="animate-fade-in pb-20">
+        <div className="settlements-page animate-fade-in pb-20">
             <div className="flex items-center gap-4 mb-7">
                 <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-white/5 transition">←</button>
                 <div>
