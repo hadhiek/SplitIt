@@ -3,38 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../components/ToastProvider';
+import { runReceiptOcr } from '../utils/receiptOcr';
 
-
-async function optimizeReceiptForUpload(file) {
-  // Compress large phone photos in the browser to reduce mobile upload time.
-  // If a browser cannot decode/encode the image, fall back to the original.
-  if (typeof createImageBitmap !== 'function') return file;
-  let bitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1800 / bitmap.width, 2600 / bitmap.height);
-    if (scale === 1 && file.size <= 2 * 1024 * 1024) return file;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const context = canvas.getContext('2d');
-    if (!context) return file;
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.84));
-    if (!blob) return file;
-    const baseName = file.name.replace(/\.[^.]+$/, '') || 'receipt';
-    return new File([blob], `${baseName}.jpg`, {
-      type: 'image/jpeg',
-      lastModified: Date.now(),
-    });
-  } catch {
-    return file;
-  } finally {
-    bitmap?.close?.();
-  }
-}
 
 const money = (value) => `₹${(Number(value || 0)).toFixed(2)}`;
 const toCents = (value) => Math.round((Number(value) || 0) * 100);
@@ -76,6 +46,7 @@ export default function ItemizedExpensePage() {
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState('');
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState(0);
   const [receiptTotal, setReceiptTotal] = useState(null);
   const [ocrWarnings, setOcrWarnings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -196,32 +167,26 @@ export default function ItemizedExpensePage() {
   };
 
   const extractReceipt = async () => {
-    if (!receiptFile) return;
+    if (!receiptFile || ocrLoading) return;
     setOcrLoading(true);
+    setOcrProgress(0);
     setOcrWarnings([]);
+    setReceiptTotal(null);
     try {
-      const uploadFile = await optimizeReceiptForUpload(receiptFile);
-      const formData = new FormData();
-      formData.append('file', uploadFile);
-      const response = await api.post('/api/receipts/extract', formData, {
-        timeout: 120000,
-      });
-      const data = response.data || {};
-      const parsedItems = (data.line_items || []).filter((item) => item.name && Number(item.unit_price) >= 0);
+      // OCR and parsing run in this browser. The receipt image is never uploaded to Render.
+      const data = await runReceiptOcr(receiptFile, setOcrProgress);
+      const parsedItems = (data.line_items || []).filter((item) =>
+        item.name && Number(item.quantity) > 0 && Number(item.unit_price) > 0
+      );
       const warnings = Array.isArray(data.warnings) ? [...data.warnings] : [];
       const currency = data.currency || 'INR';
       if (currency !== 'INR') {
         warnings.push(`This receipt is in ${currency}, but SplitIt currently records amounts in INR. Convert the values manually before saving.`);
-      } else if (data.currency_detected === false) {
-        const currencyWarning = 'No currency symbol was detected. INR is assumed; verify the currency on the bill.';
-        if (!warnings.includes(currencyWarning)) warnings.push(currencyWarning);
       }
-      setOcrWarnings(warnings);
-      if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) setDate(data.date);
+      setOcrWarnings([...new Set(warnings)]);
+      if (data.date && /^\\d{4}-\\d{2}-\\d{2}$/.test(data.date)) setDate(data.date);
       if (currency === 'INR' && data.total_amount_source === 'printed' && data.total_amount != null) {
         setReceiptTotal(toCents(data.total_amount));
-      } else {
-        setReceiptTotal(null);
       }
       if (currency === 'INR' && parsedItems.length) {
         setItems(parsedItems.map((item, index) => ({
@@ -238,22 +203,17 @@ export default function ItemizedExpensePage() {
           setMerchant((current) => current || data.merchant_name);
           setDescription((current) => current || `Receipt - ${data.merchant_name}`);
         }
-        showToast('success', 'Receipt scanned', `Found ${parsedItems.length} possible line items. Review every item, quantity and price before saving.`);
+        showToast('success', 'Receipt scanned on device', `Found ${parsedItems.length} possible line items. Review every item, quantity and price before saving.`);
       } else if (currency !== 'INR') {
         showToast('warning', 'Currency conversion needed', 'The receipt is not in INR. Convert its amounts manually before saving.');
       } else {
         showToast('error', 'No line items detected', 'You can still enter the items manually. Try a sharper, well-lit image.');
       }
     } catch (error) {
-      const detail = error.response?.data?.detail;
-      const networkMessage = error.code === 'ECONNABORTED'
-        ? 'The scan took too long and timed out. Try a smaller, clearer image or retry when your connection is stable.'
-        : !error.response
-          ? 'Could not reach the receipt scanner. Check your connection and retry; the server may also be starting up.'
-          : null;
-      showToast('error', 'Receipt scan failed', detail || networkMessage || error.message || 'Please enter the items manually.');
+      showToast('error', 'Receipt scan failed', error.message || 'Could not process this image on your device. Try a smaller, clearer image.');
     } finally {
       setOcrLoading(false);
+      setOcrProgress(0);
     }
   };
 
@@ -337,12 +297,12 @@ export default function ItemizedExpensePage() {
             <div className="border-2 border-dashed border-border rounded-xl p-5">
               <label className="block text-sm font-medium mb-2">Choose a receipt image</label>
               <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleReceipt(event.target.files?.[0])} className="block w-full text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-2 file:text-white" />
-              <p className="text-xs text-text-muted mt-3">The image is sent to SplitIt’s temporary OCR endpoint. It is processed for this request only; neither the image nor OCR results are retained in storage or a database.</p>
+              <p className="text-xs text-text-muted mt-3">OCR runs locally in this browser. The image is not uploaded to SplitIt or stored on the server. The first scan downloads the OCR engine and English language data; later scans can reuse the browser cache.</p>
               {receiptPreview && <img src={receiptPreview} alt="Selected receipt preview" className="mt-4 max-h-64 max-w-full rounded-lg border border-border object-contain" />}
               {ocrWarnings.length > 0 && <ul className="mt-3 space-y-1 text-xs text-amber-400">{ocrWarnings.map((warning, index) => <li key={index}>• {warning}</li>)}</ul>}
               <div className="flex flex-wrap items-center gap-3 mt-4">
                 <button type="button" onClick={extractReceipt} disabled={!receiptFile || ocrLoading} className="px-4 py-2 rounded-lg bg-accent text-white text-sm font-semibold disabled:opacity-50">
-                  {ocrLoading ? 'Scanning receipt…' : 'Extract items from receipt'}
+                  {ocrLoading ? `Scanning on device… ${ocrProgress}%` : 'Extract items from receipt'}
                 </button>
                 {receiptFile && <button type="button" onClick={() => { setReceiptFile(null); setReceiptTotal(null); setOcrWarnings([]); }} className="px-4 py-2 rounded-lg border border-border text-sm">Remove image</button>}
               </div>
