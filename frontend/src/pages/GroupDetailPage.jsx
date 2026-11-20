@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -48,6 +48,12 @@ export default function GroupDetailPage() {
     const isAdmin = group?.members?.some(
         m => m.user_id === user?.id && m.role === 'admin'
     );
+
+    const fetchBalances = useCallback(() => {
+        api.get(`/api/settlements/balances/${id}`)
+            .then(res => setBalances(res.data))
+            .catch(err => console.error("Balance fetch error:", err));
+    }, [id]);
 
     useEffect(() => {
         let active = true;
