@@ -554,29 +554,51 @@ async function getWorker(onProgress) {
   if (!workerPromise) {
     const moduleUrl = assetUrl(TESSERACT_MODULE_PATH);
     workerPromise = import(/* @vite-ignore */ moduleUrl)
-      .then(({ createWorker }) => createWorker('eng', 1, {
-        workerPath: assetUrl('/ocr/worker.min.js'),
-        corePath: assetUrl('/ocr/core/'),
-        langPath: assetUrl('/ocr/lang'),
-        workerBlobURL: false,
-        cacheMethod: 'write',
-        gzip: true,
-        logger: (message) => {
-          const progress = Number(message.progress || 0);
-          if (message.status === 'loading language traineddata') {
-            onProgress?.(Math.round(15 + progress * 10), 'Loading English model');
-          } else if (message.status === 'recognizing text') {
-            onProgress?.(Math.round(25 + progress * 75), 'Reading receipt');
-          } else if (message.status === 'loading tesseract core') {
-            onProgress?.(Math.round(5 + progress * 5), 'Loading OCR engine');
-          } else if (message.status === 'initializing tesseract' || message.status === 'initializing api') {
-            onProgress?.(12, 'Starting OCR engine');
-          }
-        },
-      }))
+      .then((tesseractModule) => {
+        const createWorker = tesseractModule.createWorker || tesseractModule.default?.createWorker;
+        if (typeof createWorker !== 'function') {
+          throw new TypeError(
+            'The locally loaded Tesseract module does not export a callable createWorker function. ' +
+            'Available exports: ' + Object.keys(tesseractModule).join(', '),
+          );
+        }
+
+        return createWorker('eng', 1, {
+          workerPath: assetUrl('/ocr/worker.min.js'),
+          corePath: assetUrl('/ocr/core/'),
+          langPath: assetUrl('/ocr/lang'),
+          workerBlobURL: false,
+          cacheMethod: 'write',
+          gzip: true,
+          logger: (message) => {
+            const progress = Number(message.progress || 0);
+            if (message.status === 'loading language traineddata') {
+              onProgress?.(Math.round(15 + progress * 10), 'Loading English model');
+            } else if (message.status === 'recognizing text') {
+              onProgress?.(Math.round(25 + progress * 75), 'Reading receipt');
+            } else if (message.status === 'loading tesseract core') {
+              onProgress?.(Math.round(5 + progress * 5), 'Loading OCR engine');
+            } else if (message.status === 'initializing tesseract' || message.status === 'initializing api') {
+              onProgress?.(12, 'Starting OCR engine');
+            }
+          },
+          errorHandler: (error) => {
+            console.error('[receipt-ocr] Tesseract worker reported an error:', error);
+          },
+        });
+      })
       .catch((error) => {
         workerPromise = null;
-        throw new Error('Could not start the on-device OCR engine. ' + (error?.message || 'Check that the app has finished loading its OCR files.'));
+        console.error('[receipt-ocr] Tesseract initialization failed:', error);
+        const detail = error instanceof Error
+          ? error.name + ': ' + error.message
+          : String(error);
+        throw new Error(
+          'Could not start the on-device OCR engine. ' +
+          detail +
+          ' Check the browser console for the original stack trace.',
+          { cause: error },
+        );
       });
   }
   return workerPromise;
