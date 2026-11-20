@@ -7,7 +7,7 @@ import { join } from 'node:path';
 const frontendRoot = process.cwd();
 const publicRoot = join(frontendRoot, 'public', 'ocr');
 const requiredFiles = [
-  join(publicRoot, 'tesseract.esm.min.js'),
+  join(publicRoot, 'tesseract.min.js'),
   join(publicRoot, 'worker.min.js'),
   join(publicRoot, 'lang', 'eng.traineddata.gz'),
   join(publicRoot, 'core', 'tesseract-core.wasm.js'),
@@ -65,7 +65,7 @@ try {
   mkdirSync(join(publicRoot, 'core'), { recursive: true });
   mkdirSync(join(publicRoot, 'lang'), { recursive: true });
 
-  for (const file of ['tesseract.esm.min.js', 'worker.min.js']) {
+  for (const file of ['tesseract.min.js', 'worker.min.js']) {
     const source = join(tesseractPackage, 'dist', file);
     if (!existsSync(source)) throw new Error('Missing Tesseract.js asset: ' + file);
     copyFileSync(source, join(publicRoot, file));
