@@ -1,5 +1,5 @@
 const MAX_ITEMS = 80;
-const TESSERACT_MODULE_PATH = '/ocr/tesseract.esm.min.js';
+const TESSERACT_SCRIPT_PATH = '/ocr/tesseract.min.js';
 
 let workerPromise;
 
@@ -550,43 +550,67 @@ function assetUrl(path) {
   return new URL(path, window.location.origin).href;
 }
 
+async function loadTesseractApi() {
+  if (typeof window.Tesseract?.createWorker === 'function') return window.Tesseract;
+
+  if (!window.__splititTesseractScriptPromise) {
+    window.__splititTesseractScriptPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-splitit-tesseract="true"]');
+      const script = existing || document.createElement('script');
+      const fail = (error) => {
+        window.__splititTesseractScriptPromise = null;
+        reject(error);
+      };
+
+      script.onload = () => {
+        if (typeof window.Tesseract?.createWorker !== 'function') {
+          fail(new TypeError('The locally loaded Tesseract script did not expose window.Tesseract.createWorker.'));
+          return;
+        }
+        resolve(window.Tesseract);
+      };
+      script.onerror = () => fail(new Error('Could not load the local Tesseract JavaScript file at ' + assetUrl(TESSERACT_SCRIPT_PATH)));
+
+      if (!existing) {
+        script.src = assetUrl(TESSERACT_SCRIPT_PATH);
+        script.async = true;
+        script.dataset.splititTesseract = 'true';
+        document.head.appendChild(script);
+      } else if (typeof window.Tesseract?.createWorker === 'function') {
+        resolve(window.Tesseract);
+      }
+    });
+  }
+
+  return window.__splititTesseractScriptPromise;
+}
+
 async function getWorker(onProgress) {
   if (!workerPromise) {
-    const moduleUrl = assetUrl(TESSERACT_MODULE_PATH);
-    workerPromise = import(/* @vite-ignore */ moduleUrl)
-      .then((tesseractModule) => {
-        const createWorker = tesseractModule.createWorker || tesseractModule.default?.createWorker;
-        if (typeof createWorker !== 'function') {
-          throw new TypeError(
-            'The locally loaded Tesseract module does not export a callable createWorker function. ' +
-            'Available exports: ' + Object.keys(tesseractModule).join(', '),
-          );
-        }
-
-        return createWorker('eng', 1, {
-          workerPath: assetUrl('/ocr/worker.min.js'),
-          corePath: assetUrl('/ocr/core/'),
-          langPath: assetUrl('/ocr/lang'),
-          workerBlobURL: false,
-          cacheMethod: 'write',
-          gzip: true,
-          logger: (message) => {
-            const progress = Number(message.progress || 0);
-            if (message.status === 'loading language traineddata') {
-              onProgress?.(Math.round(15 + progress * 10), 'Loading English model');
-            } else if (message.status === 'recognizing text') {
-              onProgress?.(Math.round(25 + progress * 75), 'Reading receipt');
-            } else if (message.status === 'loading tesseract core') {
-              onProgress?.(Math.round(5 + progress * 5), 'Loading OCR engine');
-            } else if (message.status === 'initializing tesseract' || message.status === 'initializing api') {
-              onProgress?.(12, 'Starting OCR engine');
-            }
-          },
-          errorHandler: (error) => {
-            console.error('[receipt-ocr] Tesseract worker reported an error:', error);
-          },
-        });
-      })
+    workerPromise = loadTesseractApi()
+      .then(({ createWorker }) => createWorker('eng', 1, {
+        workerPath: assetUrl('/ocr/worker.min.js'),
+        corePath: assetUrl('/ocr/core/'),
+        langPath: assetUrl('/ocr/lang'),
+        workerBlobURL: true,
+        cacheMethod: 'write',
+        gzip: true,
+        logger: (message) => {
+          const progress = Number(message.progress || 0);
+          if (message.status === 'loading language traineddata') {
+            onProgress?.(Math.round(15 + progress * 10), 'Loading English model');
+          } else if (message.status === 'recognizing text') {
+            onProgress?.(Math.round(25 + progress * 75), 'Reading receipt');
+          } else if (message.status === 'loading tesseract core') {
+            onProgress?.(Math.round(5 + progress * 5), 'Loading OCR engine');
+          } else if (message.status === 'initializing tesseract' || message.status === 'initializing api') {
+            onProgress?.(12, 'Starting OCR engine');
+          }
+        },
+        errorHandler: (error) => {
+          console.error('[receipt-ocr] Tesseract worker reported an error:', error);
+        },
+      }))
       .catch((error) => {
         workerPromise = null;
         console.error('[receipt-ocr] Tesseract initialization failed:', error);
