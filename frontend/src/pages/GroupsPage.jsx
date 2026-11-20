@@ -131,7 +131,7 @@ function JoinGroupModal({ open, onClose }) {
         setLoading(true);
         try {
             const res = await api.post('/api/groups/join', { invite_code: code.trim() });
-            showToast('success', 'Request Sent! 🎉', `Your request to join "${res.data.group_name || 'the group'}" has been sent.`);
+            showToast('success', 'Request Sent!', `Your request to join "${res.data.group_name || 'the group'}" has been sent.`);
             onClose();
             setCode('');
         } catch (e) {
@@ -221,7 +221,7 @@ export default function GroupsPage() {
                     <div className="flex items-center gap-4 mb-6">
                         <div className="h-px flex-1 bg-border" />
                         <h2 className="text-sm font-bold uppercase tracking-widest text-text-muted flex items-center gap-2">
-                            <span>📜</span> History / Inactive Groups
+                            History / Inactive Groups
                         </h2>
                         <div className="h-px flex-1 bg-border" />
                     </div>

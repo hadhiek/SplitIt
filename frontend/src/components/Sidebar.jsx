@@ -94,7 +94,7 @@ export default function Sidebar() {
                         <div className="text-sm font-semibold truncate">{displayName}</div>
                         <div className="text-xs text-text-muted">Personal Workspace</div>
                     </div>
-                    <span className={`text-text-muted text-sm transition-transform duration-300 ${showLogout ? 'rotate-90 text-text-primary' : ''}`}>⚙</span>
+                    <span className={`text-text-muted text-sm transition-transform duration-300 ${showLogout ? 'rotate-90 text-text-primary' : ''}`}>⌄</span>
                 </div>
             </div>
         </aside>

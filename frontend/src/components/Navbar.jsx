@@ -77,7 +77,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3 relative">
                 {/* Search */}
                 <div className="app-navbar__search flex items-center gap-2.5 bg-bg-input border border-border rounded-full px-4 py-2 w-60 focus-within:border-accent focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition">
-                    <span className="text-text-muted text-sm">🔍</span>
+                    
                     <input type="text" placeholder="Search expenses, groups..." className="bg-transparent border-none outline-none text-text-primary text-sm w-full placeholder:text-text-muted" />
                 </div>
                 
@@ -85,9 +85,9 @@ export default function Navbar() {
                 <div ref={dropdownRef}>
                     <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className={`w-[38px] h-[38px] rounded-[10px] border flex items-center justify-center text-base transition relative ${showDropdown ? 'bg-bg-card-hover border-border text-text-primary' : 'bg-bg-card border-border text-text-secondary hover:bg-bg-card-hover hover:text-text-primary'}`}
+                        className={`h-[38px] px-3 rounded-[10px] border flex items-center justify-center text-base transition relative ${showDropdown ? 'bg-bg-card-hover border-border text-text-primary' : 'bg-bg-card border-border text-text-secondary hover:bg-bg-card-hover hover:text-text-primary'}`}
                     >
-                        🔔
+                        <span className="text-[11px] font-semibold">Alerts</span>
                         {unreadCount > 0 && (
                             <span className="absolute top-1.5 right-1.5 w-[8px] h-[8px] bg-red rounded-full border-[1.5px] border-bg-primary" />
                         )}
@@ -114,7 +114,7 @@ export default function Navbar() {
                                         >
                                             <div className="flex gap-3">
                                                 <div className="text-lg shrink-0">
-                                                    {n.type === 'success' ? '✅' : n.type === 'error' ? '❌' : '✉️'}
+                                                    {n.type === 'success' ? 'Success' : n.type === 'error' ? 'Error' : n.type === 'warning' ? 'Warning' : 'Info'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className={`text-[0.9rem] leading-snug ${n.read ? 'text-text-secondary' : 'font-semibold text-text-primary'}`}>

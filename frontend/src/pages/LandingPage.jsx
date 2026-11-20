@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
+import customSplit from '../../logo/custom.png';
+import receipt from '../../logo/bill.png';
+import analytics from '../../logo/dashboard.png';
+import settlement from '../../logo/settlement.png';
+import groupIcon from '../../logo/group.png';
+import alerts from '../../logo/request.png';
+import logo from '../../logo/logo.png';
 
 const features = [
-    { icon: '💰', bg: 'rgba(99,102,241,0.15)', title: 'Smart Splitting', desc: 'Equal, percentage or custom splits. SplitIt figures out the math so you don\'t have to.' },
-    { icon: '🧾', bg: 'rgba(34,197,94,0.15)', title: 'Receipt Verification', desc: 'Upload receipts for any expense. Admins verify before approval for full transparency.' },
-    { icon: '📊', bg: 'rgba(59,130,246,0.15)', title: 'Analytics Dashboard', desc: 'Category-wise spending charts and time-based trends so you always know where money goes.' },
-    { icon: '⚡', bg: 'rgba(245,158,11,0.15)', title: 'Instant Settlements', desc: 'Optimized payment graph reduces the number of transactions needed to settle up a group.' },
-    { icon: '👥', bg: 'rgba(239,68,68,0.15)', title: 'Role Management', desc: 'Admins, co-admins and members each have the right level of access for secure collaboration.' },
-    { icon: '🔔', bg: 'rgba(167,139,250,0.15)', title: 'Real-time Alerts', desc: 'Instant notifications when expenses are added, approved or settlements are requested.' },
+    { icon: customSplit, bg: 'rgba(99,102,241,0.15)', title: 'Smart Splitting', desc: 'Equal, percentage or custom splits. SplitIt figures out the math so you don\'t have to.' },
+    { icon: receipt, bg: 'rgba(34,197,94,0.15)', title: 'Receipt Verification', desc: 'Upload receipts for any expense. Admins verify before approval for full transparency.' },
+    { icon: analytics, bg: 'rgba(59,130,246,0.15)', title: 'Analytics Dashboard', desc: 'Category-wise spending charts and time-based trends so you always know where money goes.' },
+    { icon: settlement, bg: 'rgba(245,158,11,0.15)', title: 'Instant Settlements', desc: 'Optimized payment graph reduces the number of transactions needed to settle up a group.' },
+    { icon: groupIcon, bg: 'rgba(239,68,68,0.15)', title: 'Role Management', desc: 'Admins, co-admins and members each have the right level of access for secure collaboration.' },
+    { icon: alerts, bg: 'rgba(167,139,250,0.15)', title: 'Real-time Alerts', desc: 'Instant notifications when expenses are added, approved or settlements are requested.' },
 ];
 
 export default function LandingPage() {
@@ -18,7 +25,7 @@ export default function LandingPage() {
             {/* Nav */}
             <nav className="landing-nav flex items-center justify-between px-15 py-5 relative z-10">
                 <div className="flex items-center gap-2.5 text-[1.4rem] font-extrabold tracking-tight">
-                    <div className="w-9 h-9 bg-gradient-to-br from-accent to-accent-light rounded-[10px] flex items-center justify-center text-lg">✂</div>
+                    <div className="w-9 h-9 bg-gradient-to-br from-accent to-accent-light rounded-[10px] flex items-center justify-center"><img src={logo} alt="" className="w-7 h-7 object-contain"/></div>
                     Split<span className="text-text-secondary font-normal">It</span>
                 </div>
                 <div className="flex items-center gap-8">
@@ -60,7 +67,7 @@ export default function LandingPage() {
             <section id="features" className="landing-features px-15 py-20 grid grid-cols-3 gap-6 max-w-[1200px] mx-auto">
                 {features.map(f => (
                     <div key={f.title} className="bg-bg-card border border-border rounded-[20px] p-8 hover:border-[rgba(99,102,241,0.3)] hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.6)] transition-all">
-                        <div className="w-12 h-12 rounded-[10px] flex items-center justify-center text-[22px] mb-5" style={{ background: f.bg }}>{f.icon}</div>
+                        <div className="w-12 h-12 rounded-[10px] flex items-center justify-center mb-5" style={{ background: f.bg }}><img src={f.icon} alt="" className="w-7 h-7 object-contain"/></div>
                         <h3 className="font-semibold mb-2.5">{f.title}</h3>
                         <p className="text-text-secondary text-sm leading-relaxed">{f.desc}</p>
                     </div>

@@ -10,7 +10,6 @@ import warning from "../../logo/warning.png";
 import groupIcon from "../../logo/group.png";
 import tick from "../../logo/tick.png";
 import bill from "../../logo/bill.png";
-import settings from "../../logo/settings.png";
 import deleteImg from "../../logo/delete.png";
 import youOwe from "../../logo/you_owe.png";
 import settlement from "../../logo/settlement.png";
@@ -183,8 +182,7 @@ export default function GroupDetailPage() {
                     </div>
                 </div>
                 <div className="group-detail-actions flex gap-2.5">
-                    <button className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"> <img src={settings}/> Settings</button>
-                    {isAdmin && group.is_active !== false && (
+                                        {isAdmin && group.is_active !== false && (
                         <button 
                             onClick={handleDeleteGroup}
                             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-red-dim text-red border border-[rgba(239,68,68,0.2)] hover:bg-[rgba(239,68,68,0.3)] transition">
@@ -394,7 +392,7 @@ export default function GroupDetailPage() {
                             to={`/groups/${id}/settlements`}
                             className="px-4 py-2 rounded-[10px] text-xs font-bold bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition flex items-center gap-2"
                         >
-                            🔍 View Optimized Plan
+                            View Optimized Plan
                         </Link>
                     </div>
                     {historyLoading ? (

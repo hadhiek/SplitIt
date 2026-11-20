@@ -4,6 +4,7 @@ import api from '../api';
 import { SummaryCard, Avatar, Badge } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
 import { useAuth } from '../contexts/AuthContext';
+import groupIcon from '../../logo/group.png';
 
 export default function GlobalSettlementsPage() {
     const { user } = useAuth();
@@ -101,7 +102,7 @@ export default function GlobalSettlementsPage() {
             <div className="space-y-8">
                 {activeGroups === 0 ? (
                     <div className="bg-bg-card border border-border rounded-[24px] p-16 text-center shadow-sm">
-                        <div className="text-5xl mb-4">✨</div>
+                        
                         <div className="text-xl font-bold">You're completely settled up!</div>
                         <p className="text-sm text-text-muted mt-2 max-w-sm mx-auto">
                             No outstanding debts found in any of your groups. Enjoy the feeling of clean balances.
@@ -115,7 +116,7 @@ export default function GlobalSettlementsPage() {
                         <div key={group.group_id} className="animate-scale-in">
                             <div className="flex items-center justify-between px-2 mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-[8px] bg-bg-card border border-border flex items-center justify-center text-sm shadow-sm">{group.group_emoji || '👥'}</div>
+                                    <div className="w-8 h-8 rounded-[8px] bg-bg-card border border-border flex items-center justify-center text-sm shadow-sm">{group.group_emoji || <img src={groupIcon} alt="" className="w-4 h-4 object-contain"/>}</div>
                                     <h3 className="text-[0.9rem] font-black uppercase tracking-[0.15em] text-text-primary">{group.group_name}</h3>
                                     <Badge color="blue">Plan Optimized</Badge>
                                 </div>

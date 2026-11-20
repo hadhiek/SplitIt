@@ -47,7 +47,7 @@ export default function VerificationPage() {
                                     <span className="font-medium">{d.r}</span>
                                 </div>
                             ))}
-                            {v.note && <div className="bg-bg-secondary rounded-[10px] px-3 py-2.5 text-xs text-text-muted my-3">📝 {v.note}</div>}
+                            {v.note && <div className="bg-bg-secondary rounded-[10px] px-3 py-2.5 text-xs text-text-muted my-3" >{v.note}</div>}
                             <div className="flex gap-2.5 mt-5">
                                 <button onClick={() => handleAction(v.id, 'reject')} className="flex-1 px-3.5 py-2 rounded-[10px] text-sm font-semibold bg-red-dim text-red border border-[rgba(239,68,68,0.3)] hover:bg-[rgba(239,68,68,0.2)] transition">✕ Reject</button>
                                 <button onClick={() => handleAction(v.id, 'approve')} className="flex-1 px-3.5 py-2 rounded-[10px] text-sm font-semibold bg-green-dim text-green border border-[rgba(34,197,94,0.3)] hover:bg-[rgba(34,197,94,0.2)] transition">✓ Approve</button>

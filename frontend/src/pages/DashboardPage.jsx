@@ -40,7 +40,7 @@ function JoinGroupModal({ open, onClose }) {
         setLoading(true);
         try {
             const res = await api.post('/api/groups/join', { invite_code: code.trim() });
-            showToast('success', 'Request Sent! 🎉', `Your join request for "${res.data.group_name || 'the group'}" has been sent to the admin.`);
+            showToast('success', 'Request Sent!', `Your join request for "${res.data.group_name || 'the group'}" has been sent to the admin.`);
             onClose();
             setCode('');
         } catch (e) {
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                     <p className="text-text-secondary text-sm mt-1">Here's your financial overview for today</p>
                 </div>
                 <div className="dashboard-actions flex gap-2.5">
-                    <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">🔗 Join Group</button>
+                    <button onClick={() => setJoinModalOpen(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition"><img src={linker} alt="" className="w-4 h-4"/> Join Group</button>
                     <Link to="/add-expense" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-accent text-white hover:bg-[#5254cc] hover:-translate-y-0.5 transition">+ Add Expense</Link>
                 </div>
             </div>
@@ -171,10 +171,10 @@ export default function DashboardPage() {
             {/* Pending Join Requests Banner */}
             {pendingRequests.length > 0 && (
                 <div className="bg-yellow-dim border border-[rgba(245,158,11,0.3)] rounded-[14px] p-4 mb-6 animate-fade-in">
-                    <div className="text-sm font-semibold text-yellow mb-1">⏳ Pending Join Requests</div>
+                    <div className="text-sm font-semibold text-yellow mb-1">Pending Join Requests</div>
                     {pendingRequests.map(r => (
                         <div key={r.id} className="text-xs text-text-secondary">
-                            Waiting for admin approval to join <span className="font-semibold text-text-primary">{r.group_emoji || '👥'} {r.group_name || `Group #${r.group_id}`}</span>
+                            Waiting for admin approval to join <span className="font-semibold text-text-primary">{r.group_emoji} {r.group_name || `Group #${r.group_id}`}</span>
                         </div>
                     ))}
                 </div>
@@ -295,7 +295,7 @@ export default function DashboardPage() {
                     {[
                         { icon: <img src={add}/>, label: 'Add Expense', action: () => window.location.href = '/add-expense' },
                         { icon: <img src={linker}/>, label: 'Create Group', action: () => window.location.href = '/groups' },
-                        { icon: '🔗', label: 'Join Group', action: () => setJoinModalOpen(true) },
+                        { icon: <img src={linker}/>, label: 'Join Group', action: () => setJoinModalOpen(true) },
                     ].map(a => (
                         <button key={a.label} onClick={a.action} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-sm font-semibold bg-bg-card text-text-primary border border-border hover:bg-bg-card-hover transition">
                             {a.icon} {a.label}
