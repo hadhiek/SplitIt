@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
@@ -12,16 +13,16 @@ const labels = { success: 'Success', error: 'Error', warning: 'Warning', info: '
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
 
-    const showToast = useCallback((type, title, message) => {
-        const id = ++toastId;
-        setToasts(prev => [...prev, { id, type, title, message }]);
-        setTimeout(() => removeToast(id), 4000);
-    }, []);
-
     const removeToast = useCallback((id) => {
         setToasts(prev => prev.map(t => t.id === id ? { ...t, removing: true } : t));
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300);
     }, []);
+
+    const showToast = useCallback((type, title, message) => {
+        const id = ++toastId;
+        setToasts(prev => [...prev, { id, type, title, message }]);
+        setTimeout(() => removeToast(id), 4000);
+    }, [removeToast]);
 
     return (
         <ToastContext.Provider value={showToast}>

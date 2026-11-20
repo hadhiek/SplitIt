@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import dashboard from "../../logo/dashboard.png";
 import groupIcon from "../../logo/group.png";
@@ -20,7 +20,6 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-    const location = useLocation();
     const { user, signOut } = useAuth();
     const [showLogout, setShowLogout] = useState(false);
     
@@ -80,7 +79,7 @@ export default function Sidebar() {
                             onClick={handleLogout}
                             className="w-full px-4 py-3 text-left text-sm font-semibold text-red hover:bg-red/5 transition-colors flex items-center gap-2"
                         >
-                            <span>🚪</span> Sign Out
+                            <span>Sign Out</span>
                         </button>
                     </div>
                 )}

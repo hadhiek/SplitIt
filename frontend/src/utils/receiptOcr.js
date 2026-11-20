@@ -161,8 +161,8 @@ function nearestNumber(numbers, x, pageWidth, used) {
 
 function cleanItemName(value) {
   return normalize(value)
-    .replace(/^[\s|:;*•\-]+/, '')
-    .replace(/[\s|:;*•\-]+$/, '')
+    .replace(/^[\s|:;*•-]+/, '')
+    .replace(/[\s|:;*•-]+$/, '')
     .replace(/^\d{1,3}[.)]\s+/, '')
     .trim();
 }

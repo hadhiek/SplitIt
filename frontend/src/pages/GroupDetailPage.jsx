@@ -29,7 +29,7 @@ export default function GroupDetailPage() {
     const { id } = useParams();
     const { user } = useAuth();
     const [group, setGroup] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loadedGroupId, setLoadedGroupId] = useState(null);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('members');
     const [joinRequests, setJoinRequests] = useState([]);
@@ -49,50 +49,91 @@ export default function GroupDetailPage() {
         m => m.user_id === user?.id && m.role === 'admin'
     );
 
-    const fetchBalances = () => {
-        api.get(`/api/settlements/balances/${id}`)
-            .then(res => setBalances(res.data))
-            .catch(err => console.error("Balance fetch error:", err));
-    };
-
     useEffect(() => {
-        setLoading(true);
-        setError(null);
+        let active = true;
+
         api.get(`/api/groups/${id}`)
-            .then(res => setGroup(res.data))
+            .then(res => {
+                if (active) {
+                    setError(null);
+                    setGroup(res.data);
+                }
+            })
             .catch(err => {
+                if (!active) return;
                 console.error(err);
                 setError(err.response?.data?.detail || "Failed to load group details");
                 showToast('error', 'Error', 'Failed to load group details');
             })
-            .finally(() => setLoading(false));
-            
-        fetchBalances();
-    }, [id]);
+            .finally(() => {
+                if (active) setLoadedGroupId(id);
+            });
 
-    // Fetch join requests/settlements history when switching tabs
+        api.get(`/api/settlements/balances/${id}`)
+            .then(res => {
+                if (active) setBalances(res.data);
+            })
+            .catch(err => {
+                if (active) console.error("Balance fetch error:", err);
+            });
+
+        return () => { active = false; };
+    }, [id, showToast]);
+
+    // Fetch tab-specific data when the selected tab changes.
     useEffect(() => {
+        let active = true;
+
         if (activeTab === 'requests' && isAdmin) {
-            setRequestsLoading(true);
-            api.get(`/api/groups/${id}/requests`)
-                .then(res => setJoinRequests(res.data))
-                .catch(err => console.error(err))
-                .finally(() => setRequestsLoading(false));
+            Promise.resolve()
+                .then(() => {
+                    if (active) setRequestsLoading(true);
+                    return api.get(`/api/groups/${id}/requests`);
+                })
+                .then(res => {
+                    if (active) setJoinRequests(res.data);
+                })
+                .catch(err => {
+                    if (active) console.error(err);
+                })
+                .finally(() => {
+                    if (active) setRequestsLoading(false);
+                });
         }
         if (activeTab === 'settlements') {
-            setHistoryLoading(true);
-            api.get(`/api/settlements/history/${id}`)
-                .then(res => setSettlementsHistory(res.data))
-                .catch(err => console.error(err))
-                .finally(() => setHistoryLoading(false));
+            Promise.resolve()
+                .then(() => {
+                    if (active) setHistoryLoading(true);
+                    return api.get(`/api/settlements/history/${id}`);
+                })
+                .then(res => {
+                    if (active) setSettlementsHistory(res.data);
+                })
+                .catch(err => {
+                    if (active) console.error(err);
+                })
+                .finally(() => {
+                    if (active) setHistoryLoading(false);
+                });
         }
         if (activeTab === 'loans') {
-            setLoansLoading(true);
-            api.get(`/api/loans/${id}`)
-                .then(res => setLoans(res.data))
-                .catch(err => console.error(err))
-                .finally(() => setLoansLoading(false));
+            Promise.resolve()
+                .then(() => {
+                    if (active) setLoansLoading(true);
+                    return api.get(`/api/loans/${id}`);
+                })
+                .then(res => {
+                    if (active) setLoans(res.data);
+                })
+                .catch(err => {
+                    if (active) console.error(err);
+                })
+                .finally(() => {
+                    if (active) setLoansLoading(false);
+                });
         }
+
+        return () => { active = false; };
     }, [activeTab, isAdmin, id]);
 
     const handleCopyCode = async () => {
@@ -139,7 +180,7 @@ export default function GroupDetailPage() {
         }
     };
 
-    if (loading) return (
+    if (loadedGroupId !== id) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-text-muted">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent mb-4"></div>
             <p className="text-sm font-medium italic">Gathering financials...</p>

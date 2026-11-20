@@ -17,7 +17,7 @@ export default function AuthPage() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email: loginEmail,
             password: loginPassword,
         });
@@ -34,7 +34,7 @@ export default function AuthPage() {
     const handleSignup = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
             email: signupData.email,
             password: signupData.password,
             options: {

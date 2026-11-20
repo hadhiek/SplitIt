@@ -64,29 +64,24 @@ function AppLayout() {
   const { user } = useAuth();
   const userId = user?.id;
   const [profile, setProfile] = useState(null);
-  const [profileSyncComplete, setProfileSyncComplete] = useState(false);
+  const [syncedProfileUserId, setSyncedProfileUserId] = useState(null);
+  const profileSyncComplete = !userId || syncedProfileUserId === userId;
 
   useEffect(() => {
+    if (!userId) return undefined;
+
     let active = true;
-
-    if (!userId) {
-      setProfile(null);
-      setProfileSyncComplete(true);
-      return () => { active = false; };
-    }
-
-    setProfileSyncComplete(false);
 
     // Create/sync the backend profile before pages load data that references it.
     api.get('/api/users/me')
       .then((response) => {
-        if (active) setProfile(response.data);
+        if (active) {
+          setProfile(response.data);
+          setSyncedProfileUserId(userId);
+        }
       })
       .catch((error) => {
         console.error('Failed to sync user profile', error);
-      })
-      .finally(() => {
-        if (active) setProfileSyncComplete(true);
       });
 
     return () => { active = false; };

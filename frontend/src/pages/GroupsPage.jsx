@@ -78,7 +78,7 @@ function CreateGroupModal({ open, onClose, onCreated }) {
             onCreated(res.data);
             onClose();
             setName(''); setDesc(''); setEmoji(iconMap['group']);
-        } catch(e) {
+        } catch {
             showToast('error', 'Failed', 'Could not create group.');
         } finally {
             setLoading(false);
