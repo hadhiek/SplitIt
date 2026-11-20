@@ -78,7 +78,7 @@ export default function SettleUpModal({ open, onClose, group, suggestedSettlemen
                     </div>
                 ) : (
                     <div className="bg-green-dim/30 border border-green/20 rounded-[16px] p-5 text-center mb-8">
-                        <div className="text-sm font-bold text-green mb-1">🎉 You're all settled!</div>
+                        <div className="text-sm font-bold text-green mb-1">You're all settled!</div>
                         <div className="text-xs text-green/70">No suggested payments for this group.</div>
                     </div>
                 ) }

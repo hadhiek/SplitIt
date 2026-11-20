@@ -1,5 +1,5 @@
 const MAX_ITEMS = 80;
-const TESSERACT_MODULE_PATH = '/ocr/tesseract.esm.min.js';
+const TESSERACT_SCRIPT_PATH = '/ocr/tesseract.min.js';
 
 let workerPromise;
 
@@ -161,8 +161,8 @@ function nearestNumber(numbers, x, pageWidth, used) {
 
 function cleanItemName(value) {
   return normalize(value)
-    .replace(/^[\s|:;*•\-]+/, '')
-    .replace(/[\s|:;*•\-]+$/, '')
+    .replace(/^[\s|:;*•-]+/, '')
+    .replace(/[\s|:;*•-]+$/, '')
     .replace(/^\d{1,3}[.)]\s+/, '')
     .trim();
 }
@@ -550,15 +550,49 @@ function assetUrl(path) {
   return new URL(path, window.location.origin).href;
 }
 
+async function loadTesseractApi() {
+  if (typeof window.Tesseract?.createWorker === 'function') return window.Tesseract;
+
+  if (!window.__splititTesseractScriptPromise) {
+    window.__splititTesseractScriptPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-splitit-tesseract="true"]');
+      const script = existing || document.createElement('script');
+      const fail = (error) => {
+        window.__splititTesseractScriptPromise = null;
+        reject(error);
+      };
+
+      script.onload = () => {
+        if (typeof window.Tesseract?.createWorker !== 'function') {
+          fail(new TypeError('The locally loaded Tesseract script did not expose window.Tesseract.createWorker.'));
+          return;
+        }
+        resolve(window.Tesseract);
+      };
+      script.onerror = () => fail(new Error('Could not load the local Tesseract JavaScript file at ' + assetUrl(TESSERACT_SCRIPT_PATH)));
+
+      if (!existing) {
+        script.src = assetUrl(TESSERACT_SCRIPT_PATH);
+        script.async = true;
+        script.dataset.splititTesseract = 'true';
+        document.head.appendChild(script);
+      } else if (typeof window.Tesseract?.createWorker === 'function') {
+        resolve(window.Tesseract);
+      }
+    });
+  }
+
+  return window.__splititTesseractScriptPromise;
+}
+
 async function getWorker(onProgress) {
   if (!workerPromise) {
-    const moduleUrl = assetUrl(TESSERACT_MODULE_PATH);
-    workerPromise = import(/* @vite-ignore */ moduleUrl)
+    workerPromise = loadTesseractApi()
       .then(({ createWorker }) => createWorker('eng', 1, {
         workerPath: assetUrl('/ocr/worker.min.js'),
         corePath: assetUrl('/ocr/core/'),
         langPath: assetUrl('/ocr/lang'),
-        workerBlobURL: false,
+        workerBlobURL: true,
         cacheMethod: 'write',
         gzip: true,
         logger: (message) => {
@@ -573,10 +607,22 @@ async function getWorker(onProgress) {
             onProgress?.(12, 'Starting OCR engine');
           }
         },
+        errorHandler: (error) => {
+          console.error('[receipt-ocr] Tesseract worker reported an error:', error);
+        },
       }))
       .catch((error) => {
         workerPromise = null;
-        throw new Error('Could not start the on-device OCR engine. ' + (error?.message || 'Check that the app has finished loading its OCR files.'));
+        console.error('[receipt-ocr] Tesseract initialization failed:', error);
+        const detail = error instanceof Error
+          ? error.name + ': ' + error.message
+          : String(error);
+        throw new Error(
+          'Could not start the on-device OCR engine. ' +
+          detail +
+          ' Check the browser console for the original stack trace.',
+          { cause: error },
+        );
       });
   }
   return workerPromise;

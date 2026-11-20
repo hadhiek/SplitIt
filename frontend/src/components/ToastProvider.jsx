@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);
@@ -7,21 +8,21 @@ export function useToast() {
 }
 
 let toastId = 0;
-const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+const labels = { success: 'Success', error: 'Error', warning: 'Warning', info: 'Info' };
 
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
-
-    const showToast = useCallback((type, title, message) => {
-        const id = ++toastId;
-        setToasts(prev => [...prev, { id, type, title, message }]);
-        setTimeout(() => removeToast(id), 4000);
-    }, []);
 
     const removeToast = useCallback((id) => {
         setToasts(prev => prev.map(t => t.id === id ? { ...t, removing: true } : t));
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 300);
     }, []);
+
+    const showToast = useCallback((type, title, message) => {
+        const id = ++toastId;
+        setToasts(prev => [...prev, { id, type, title, message }]);
+        setTimeout(() => removeToast(id), 4000);
+    }, [removeToast]);
 
     return (
         <ToastContext.Provider value={showToast}>
@@ -32,7 +33,7 @@ export function ToastProvider({ children }) {
                         key={t.id}
                         className={`min-w-[300px] max-w-[380px] bg-bg-card border border-border rounded-[14px] px-[18px] py-3.5 flex items-start gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.6)] ${t.removing ? 'animate-slide-out' : 'animate-slide-in'} ${t.type === 'success' ? 'border-l-[3px] border-l-green' : t.type === 'error' ? 'border-l-[3px] border-l-red' : t.type === 'warning' ? 'border-l-[3px] border-l-yellow' : 'border-l-[3px] border-l-accent'}`}
                     >
-                        <span className="text-lg shrink-0 mt-0.5">{icons[t.type] || 'ℹ️'}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0 mt-1 text-text-muted">{labels[t.type] || 'Info'}</span>
                         <div className="flex-1">
                             <div className="text-sm font-semibold mb-0.5">{t.title}</div>
                             <div className="text-xs text-text-secondary">{t.message}</div>

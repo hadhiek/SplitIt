@@ -1,14 +1,20 @@
 import { WALLET_TRANSACTIONS } from '../data/mockData';
 import { SummaryCard } from '../components/ui';
 import { useToast } from '../components/ToastProvider';
+import settlement from '../../logo/settlement.png';
+import requestIcon from '../../logo/request.png';
+import add from '../../logo/add.png';
+import bill from '../../logo/bill.png';
+import youOwe from '../../logo/you_owe.png';
+import owed from '../../logo/owed.png';
 
 export default function WalletPage() {
     const showToast = useToast();
     const actions = [
-        { icon: '📤', label: 'Send', onClick: () => showToast('info', 'Send Money', 'Coming soon! Connect your UPI ID.') },
-        { icon: '📥', label: 'Request', onClick: () => showToast('info', 'Request', 'Payment request feature coming soon!') },
-        { icon: '➕', label: 'Top Up', onClick: () => showToast('success', 'Top Up', 'Added ₹2,000 to your wallet') },
-        { icon: '📊', label: 'History', onClick: () => showToast('info', 'History', 'Full history download coming soon!') },
+        { icon: settlement, label: 'Send', onClick: () => showToast('info', 'Send Money', 'Coming soon! Connect your UPI ID.') },
+        { icon: requestIcon, label: 'Request', onClick: () => showToast('info', 'Request', 'Payment request feature coming soon!') },
+        { icon: add, label: 'Top Up', onClick: () => showToast('success', 'Top Up', 'Added ₹2,000 to your wallet') },
+        { icon: bill, label: 'History', onClick: () => showToast('info', 'History', 'Full history download coming soon!') },
     ];
 
     return (
@@ -19,9 +25,9 @@ export default function WalletPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-5 mb-8">
-                <SummaryCard icon="💳" iconBg="rgba(99,102,241,0.15)" label="Wallet Balance" value="₹4,280" colorClass="purple" change={{ up: true, text: '↑ 12% from last month' }} />
-                <SummaryCard icon="📈" iconBg="rgba(34,197,94,0.12)" label="Total Received" value="₹24,600" colorClass="green" valueClass="text-green" />
-                <SummaryCard icon="📉" iconBg="rgba(239,68,68,0.12)" label="Total Sent" value="₹20,320" colorClass="red" valueClass="text-red" />
+                <SummaryCard icon={youOwe} iconBg="rgba(99,102,241,0.15)" label="Wallet Balance" value="₹4,280" colorClass="purple" change={{ up: true, text: '↑ 12% from last month' }} />
+                <SummaryCard icon={owed} iconBg="rgba(34,197,94,0.12)" label="Total Received" value="₹24,600" colorClass="green" valueClass="text-green" />
+                <SummaryCard icon={youOwe} iconBg="rgba(239,68,68,0.12)" label="Total Sent" value="₹20,320" colorClass="red" valueClass="text-red" />
             </div>
 
             <div className="grid grid-cols-3 gap-5 items-start">
@@ -33,7 +39,7 @@ export default function WalletPage() {
                     </div>
                     {WALLET_TRANSACTIONS.map((t, i) => (
                         <div key={i} className="flex items-center gap-3.5 py-3 border-b border-border last:border-b-0 hover:bg-white/[0.02] transition">
-                            <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center text-lg shrink-0 ${t.type === 'credit' ? 'bg-green-dim' : 'bg-red-dim'}`}>{t.icon}</div>
+                            <div className={`w-10 h-10 rounded-[10px] flex items-center justify-center text-lg shrink-0 ${t.type === 'credit' ? 'bg-green-dim' : 'bg-red-dim'}`}><img src={t.type === "credit" ? owed : youOwe} alt="" className="w-6 h-6 object-contain"/></div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-semibold truncate">{t.name}</div>
                                 <div className="text-xs text-text-muted mt-0.5">{t.date}</div>
@@ -51,7 +57,7 @@ export default function WalletPage() {
                     <div className="grid grid-cols-2 gap-3">
                         {actions.map(a => (
                             <button key={a.label} onClick={a.onClick} className="flex flex-col items-center gap-2 p-5 rounded-[14px] border border-border hover:border-[rgba(99,102,241,0.3)] hover:bg-accent-dim transition cursor-pointer text-center">
-                                <span className="text-2xl">{a.icon}</span>
+                                <img src={a.icon} alt="" className="w-7 h-7 object-contain"/>
                                 <span className="text-xs font-semibold">{a.label}</span>
                             </button>
                         ))}
