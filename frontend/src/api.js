@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+    timeout: 15000,
 });
 
 // Configure Axios to automatically attach the Supabase JWT

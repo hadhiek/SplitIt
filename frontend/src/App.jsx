@@ -64,8 +64,6 @@ function AppLayout() {
   const { user } = useAuth();
   const userId = user?.id;
   const [profile, setProfile] = useState(null);
-  const [syncedProfileUserId, setSyncedProfileUserId] = useState(null);
-  const profileSyncComplete = !userId || syncedProfileUserId === userId;
 
   useEffect(() => {
     if (!userId) return undefined;
@@ -77,7 +75,6 @@ function AppLayout() {
       .then((response) => {
         if (active) {
           setProfile(response.data);
-          setSyncedProfileUserId(userId);
         }
       })
       .catch((error) => {
@@ -89,20 +86,16 @@ function AppLayout() {
 
   return (
     <ProtectedRoute>
-      {!profileSyncComplete ? (
-        <div className="app-loading min-h-screen p-8 text-text-muted">Loading your account...</div>
-      ) : (
-        <div className="app-shell flex min-h-screen">
-          <Sidebar />
-          <div className="app-content flex-1 ml-60 min-w-0">
-            <Navbar />
-            <main className="app-main pt-16 p-8">
-              <Outlet context={{ profile }} />
-            </main>
-          </div>
-          <MobileNav />
+      <div className="app-shell flex min-h-screen">
+        <Sidebar />
+        <div className="app-content flex-1 ml-60 min-w-0">
+          <Navbar />
+          <main className="app-main pt-16 p-8">
+            <Outlet context={{ profile }} />
+          </main>
         </div>
-      )}
+        <MobileNav />
+      </div>
     </ProtectedRoute>
   );
 }
