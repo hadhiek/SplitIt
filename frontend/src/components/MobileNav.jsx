@@ -4,7 +4,7 @@ const items = [
   { to: '/', label: 'Home', icon: '⌂', end: true },
   { to: '/groups', label: 'Groups', icon: '◫' },
   { to: '/add-expense', label: 'Add', icon: '+' , primary: true },
-  { to: '/expenses', label: 'Expenses', icon: '↔' },
+  { to: '/expenses', label: 'Expenses', icon: '⇄' },
   { to: '/settlements', label: 'Settle', icon: '✓' },
 ];
 
