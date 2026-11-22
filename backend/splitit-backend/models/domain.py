@@ -90,6 +90,17 @@ class Settlement(Base):
     status = Column(String, server_default='pending')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class Loan(Base):
+    __tablename__ = "loans"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+    group_id = Column(BigInteger, ForeignKey("groups.id"), nullable=False)
+    from_user = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    to_user = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
+    note = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 class Notification(Base):
     __tablename__ = "notifications"
 

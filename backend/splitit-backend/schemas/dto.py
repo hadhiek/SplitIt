@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date, datetime
 from uuid import UUID
+from decimal import Decimal
 
 # --- Users ---
 class UserOut(BaseModel):
@@ -14,11 +15,11 @@ class UserOut(BaseModel):
 # --- Expenses ---
 class ExpenseSplitIn(BaseModel):
     user_id: UUID
-    amount_owed: float
+    amount_owed: Decimal
 
 class ExpenseCreate(BaseModel):
     group_id: int
-    amount: float
+    amount: Decimal
     description: str
     category: Optional[str] = "Other"
     paid_by: UUID
@@ -105,7 +106,7 @@ class JoinRequestAction(BaseModel):
 class SettlementCreate(BaseModel):
     group_id: int
     to_user: UUID
-    amount: float
+    amount: Decimal
     payment_method: Optional[str] = "cash"
 
 class SettlementOut(BaseModel):
@@ -122,6 +123,23 @@ class SettlementOut(BaseModel):
 class SettlementDetailOut(SettlementOut):
     from_user_name: Optional[str] = None
     to_user_name: Optional[str] = None
+
+class LoanCreate(BaseModel):
+    group_id: int
+    amount: Decimal
+    note: Optional[str] = None
+
+class LoanOut(BaseModel):
+    id: int
+    group_id: int
+    from_user: UUID
+    to_user: UUID
+    amount: float
+    note: Optional[str] = None
+    created_at: datetime
+    from_user_name: Optional[str] = None
+    to_user_name: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class UserBalance(BaseModel):
     user_id: UUID

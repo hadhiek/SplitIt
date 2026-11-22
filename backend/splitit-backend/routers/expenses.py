@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
+import uuid
+from decimal import Decimal
 
 from core.database import get_db
 from core.security import get_current_user_id
@@ -16,18 +18,26 @@ async def create_expense(
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
-    # Security: Verify the user is a member of the group
-    result = await db.execute(
-        select(GroupMember)
-        .where(GroupMember.group_id == expense_in.group_id)
-        .where(GroupMember.user_id == user_id)
-    )
-    if not result.scalars().first():
+    # Security: verify the caller and every referenced person belong to the group.
+    result = await db.execute(select(GroupMember).where(GroupMember.group_id == expense_in.group_id))
+    members = result.scalars().all()
+    member_ids = {member.user_id for member in members}
+    caller_uuid = uuid.UUID(user_id)
+    if caller_uuid not in member_ids:
         raise HTTPException(status_code=403, detail="Not a member of this group")
+    if expense_in.paid_by not in member_ids:
+        raise HTTPException(status_code=400, detail="The payer must be a member of this group")
+    if expense_in.amount <= 0 or not expense_in.description.strip():
+        raise HTTPException(status_code=400, detail="Expense amount and description must be valid")
+    if not expense_in.splits or any(split.amount_owed < 0 for split in expense_in.splits):
+        raise HTTPException(status_code=400, detail="Expense splits must be non-negative and non-empty")
+    split_user_ids = [split.user_id for split in expense_in.splits]
+    if len(set(split_user_ids)) != len(split_user_ids) or not set(split_user_ids).issubset(member_ids):
+        raise HTTPException(status_code=400, detail="Every split participant must be a unique group member")
         
     # Verify the sum of splits equals the total amount
     total_split = sum(split.amount_owed for split in expense_in.splits)
-    if abs(total_split - expense_in.amount) > 0.01:
+    if abs(total_split - expense_in.amount) > Decimal("0.01"):
         raise HTTPException(status_code=400, detail="Splits do not equal total amount")
 
     # Create Expense
@@ -75,6 +85,9 @@ async def list_expenses(
     
     if group_id:
         query = query.where(Expense.group_id == group_id)
+        membership = await db.execute(select(GroupMember).where(GroupMember.group_id == group_id, GroupMember.user_id == user_id))
+        if not membership.scalars().first():
+            raise HTTPException(status_code=403, detail="Not authorized for this group")
     else:
         # Get expenses for all groups the user is a part of
         query = query.join(GroupMember, GroupMember.group_id == Expense.group_id)\

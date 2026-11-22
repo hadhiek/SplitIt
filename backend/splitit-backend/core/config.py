@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     
     # Database URL
     DATABASE_URL: str = ""
+    CORS_ORIGINS: str = "http://localhost:5173,https://localhost"
 
     model_config = SettingsConfigDict(env_file=".env")
 
