@@ -28,6 +28,16 @@ function formatDate(dateStr) {
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Group emojis can be either a normal Unicode emoji or a data-image URL.
+// Never render a data URL as text; doing so exposes the entire base64 payload.
+function GroupEmoji({ value }) {
+    if (!value) return null;
+    if (typeof value === 'string' && value.startsWith('data:image/')) {
+        return <img src={value} alt="" className="inline-block w-4 h-4 object-contain align-text-bottom" />;
+    }
+    return <span>{value}</span>;
+}
+
 function JoinGroupModal({ open, onClose }) {
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -174,7 +184,7 @@ export default function DashboardPage() {
                     <div className="text-sm font-semibold text-yellow mb-1">Pending Join Requests</div>
                     {pendingRequests.map(r => (
                         <div key={r.id} className="text-xs text-text-secondary">
-                            Waiting for admin approval to join <span className="font-semibold text-text-primary">{r.group_emoji} {r.group_name || `Group #${r.group_id}`}</span>
+                            Waiting for admin approval to join <span className="font-semibold text-text-primary"><GroupEmoji value={r.group_emoji} /> {r.group_name || `Group #${r.group_id}`}</span>
                         </div>
                     ))}
                 </div>
@@ -243,7 +253,7 @@ export default function DashboardPage() {
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-semibold truncate">{e.description}</div>
                                 <div className="flex items-center gap-2.5 mt-0.5">
-                                    <span className="text-xs text-text-muted">{e.group_emoji} {e.group_name}</span>
+                                    <span className="text-xs text-text-muted"><GroupEmoji value={e.group_emoji} /> {e.group_name}</span>
                                     <span className="text-text-muted opacity-50">·</span>
                                     <span className="text-xs text-text-muted">{formatDate(e.expense_date)}</span>
                                 </div>

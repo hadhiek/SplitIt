@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from './ToastProvider';
+import { useAuth } from '../contexts/AuthContext';
 
 const pageTitles = {
     '/': 'Dashboard',
@@ -16,16 +17,25 @@ const pageTitles = {
 
 export default function Navbar() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { user, signOut } = useAuth();
     const showToast = useToast();
     const [notifications, setNotifications] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showAccount, setShowAccount] = useState(false);
     const dropdownRef = useRef(null);
 
     const title = pageTitles[location.pathname] || (location.pathname.startsWith('/groups/') ? 'Group Detail' : 'SplitIt');
 
     useEffect(() => {
-        // Fetch notifications
+        // Notifications are persisted by the API. Fetch whenever authentication
+        // becomes available, when navigating, and when the app returns to the
+        // foreground so messages created while the user was away are visible.
         const fetchNotifications = async () => {
+            if (!user?.id) {
+                setNotifications([]);
+                return;
+            }
             try {
                 const res = await api.get('/api/notifications');
                 setNotifications(Array.isArray(res.data) ? res.data : []);
@@ -34,7 +44,17 @@ export default function Navbar() {
             }
         };
         fetchNotifications();
-    }, [location.pathname]); // Refetch on route change occasionally
+
+        const refreshOnFocus = () => {
+            if (document.visibilityState === 'visible') fetchNotifications();
+        };
+        window.addEventListener('focus', refreshOnFocus);
+        document.addEventListener('visibilitychange', refreshOnFocus);
+        return () => {
+            window.removeEventListener('focus', refreshOnFocus);
+            document.removeEventListener('visibilitychange', refreshOnFocus);
+        };
+    }, [location.pathname, user?.id]);
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -48,6 +68,14 @@ export default function Navbar() {
     }, []);
 
     const unreadCount = notifications.filter(n => !n.read).length;
+    const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+    const initials = displayName.slice(0, 2).toUpperCase();
+
+    const handleSignOut = async () => {
+        setShowAccount(false);
+        await signOut();
+        navigate('/auth', { replace: true });
+    };
 
     const handleMarkAsRead = async (id) => {
         try {
@@ -130,6 +158,28 @@ export default function Navbar() {
                                     ))
                                 )}
                             </div>
+                        </div>
+                    )}
+                </div>
+                <div className="relative">
+                    <button
+                        type="button"
+                        aria-label="Open account menu"
+                        aria-expanded={showAccount}
+                        onClick={() => setShowAccount(value => !value)}
+                        className="h-[38px] min-w-[38px] rounded-full bg-accent text-white text-xs font-bold border border-white/10"
+                    >
+                        {initials}
+                    </button>
+                    {showAccount && (
+                        <div className="absolute top-full right-0 mt-2 w-52 bg-bg-card border border-border rounded-[14px] shadow-2xl overflow-hidden z-[120]">
+                            <div className="px-4 py-3 border-b border-border">
+                                <div className="text-sm font-semibold truncate">{displayName}</div>
+                                <div className="text-xs text-text-muted truncate">{user?.email}</div>
+                            </div>
+                            <button type="button" onClick={handleSignOut} className="w-full px-4 py-3 text-left text-sm font-semibold text-red hover:bg-red/5">
+                                Sign out
+                            </button>
                         </div>
                     )}
                 </div>
