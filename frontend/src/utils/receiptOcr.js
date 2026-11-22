@@ -2,6 +2,8 @@ const MAX_ITEMS = 80;
 const TESSERACT_SCRIPT_PATH = '/ocr/tesseract.min.js';
 
 let workerPromise;
+let activeWorker;
+let cancelRequested = false;
 
 function normalize(value) {
   return String(value || '')
@@ -594,7 +596,10 @@ async function getWorker(onProgress) {
         langPath: assetUrl('/ocr/lang'),
         workerBlobURL: true,
         cacheMethod: 'write',
-        gzip: true,
+        // Use the uncompressed model for Capacitor Android. Android's local
+        // asset handler can return 404 for .gz files even when they are in
+        // the APK, which leaves OCR stuck during language loading.
+        gzip: false,
         logger: (message) => {
           const progress = Number(message.progress || 0);
           if (message.status === 'loading language traineddata') {
@@ -694,12 +699,15 @@ export async function runReceiptOcr(file, onProgress) {
   if (!file) throw new Error('Choose a receipt image first.');
 
   let worker;
+  cancelRequested = false;
   try {
     onProgress?.(1, 'Preparing receipt image');
     const image = await prepareReceiptImage(file);
     onProgress?.(5, 'Starting OCR engine');
 
     worker = await getWorker(onProgress);
+    activeWorker = worker;
+    if (cancelRequested) throw new Error('Receipt scan cancelled. You can enter the items manually.');
     const result = await worker.recognize(image, {}, { blocks: true });
     const data = result?.data || {};
     if (!normalize(data.text)) {
@@ -720,5 +728,18 @@ export async function runReceiptOcr(file, onProgress) {
       }
     }
     throw new Error(error?.message || 'On-device receipt scanning failed. Please retry or enter items manually.');
+  } finally {
+    if (activeWorker === worker) activeWorker = null;
+  }
+}
+
+export async function cancelReceiptOcr() {
+  cancelRequested = true;
+  workerPromise = null;
+  if (!activeWorker) return;
+  try {
+    await activeWorker.terminate();
+  } finally {
+    activeWorker = null;
   }
 }

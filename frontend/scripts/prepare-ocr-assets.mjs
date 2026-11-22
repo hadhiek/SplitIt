@@ -3,6 +3,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, copyFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { gunzipSync } from 'node:zlib';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const frontendRoot = process.cwd();
 const publicRoot = join(frontendRoot, 'public', 'ocr');
@@ -10,6 +12,7 @@ const requiredFiles = [
   join(publicRoot, 'tesseract.min.js'),
   join(publicRoot, 'worker.min.js'),
   join(publicRoot, 'lang', 'eng.traineddata.gz'),
+  join(publicRoot, 'lang', 'eng.traineddata'),
   join(publicRoot, 'core', 'tesseract-core.wasm.js'),
   join(publicRoot, 'core', 'tesseract-core-simd.wasm.js'),
 ];
@@ -82,6 +85,12 @@ try {
   const trainedData = join(languagePackage, '4.0.0_best_int', 'eng.traineddata.gz');
   if (!existsSync(trainedData)) throw new Error('English OCR language data was not found in its npm package.');
   copyFileSync(trainedData, join(publicRoot, 'lang', 'eng.traineddata.gz'));
+  // Capacitor's Android asset handler is not reliable for .gz URLs. Keep an
+  // uncompressed copy and let Tesseract load it directly in the WebView.
+  writeFileSync(
+    join(publicRoot, 'lang', 'eng.traineddata'),
+    gunzipSync(readFileSync(trainedData)),
+  );
 
   console.log('[receipt-ocr] Local worker, WASM cores, and English model are ready.');
 } finally {
