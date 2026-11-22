@@ -76,7 +76,7 @@ async def get_dashboard_summary(
         
         # 3. Fetch all settlements for those groups
         settlements_res = await db.execute(
-            select(Settlement).where(Settlement.group_id.in_(group_ids))
+            select(Settlement).where(Settlement.group_id.in_(group_ids), Settlement.status == "completed")
         )
         all_settlements = settlements_res.scalars().all()
         

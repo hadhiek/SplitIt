@@ -48,7 +48,7 @@ async def list_user_groups(
     # Pre-fetch settlements for all these groups to avoid N+1
     group_ids = [g.id for g in groups]
     settlements_res = await db.execute(
-        select(Settlement).where(Settlement.group_id.in_(group_ids))
+        select(Settlement).where(Settlement.group_id.in_(group_ids), Settlement.status == "completed")
     )
     all_settlements = settlements_res.scalars().all()
     
@@ -186,7 +186,7 @@ async def delete_group(
 
     # 3. Calculate balances
     # We need all settlements too
-    res_settlements = await db.execute(select(Settlement).where(Settlement.group_id == group_id))
+    res_settlements = await db.execute(select(Settlement).where(Settlement.group_id == group_id, Settlement.status == "completed"))
     settlements = res_settlements.scalars().all()
 
     user_balances = {} # dict of UUID -> float

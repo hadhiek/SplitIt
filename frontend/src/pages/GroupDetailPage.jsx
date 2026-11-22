@@ -195,6 +195,21 @@ export default function GroupDetailPage() {
         }
     };
 
+    const handleSettlementDecision = async (settlementId, decision) => {
+        try {
+            await api.post(`/api/settlements/${settlementId}/${decision}`);
+            showToast('success', decision === 'approve' ? 'Settlement approved' : 'Settlement rejected',
+                decision === 'approve' ? 'The balance has been updated.' : 'The payer has been notified.');
+            const [history] = await Promise.all([
+                api.get(`/api/settlements/history/${id}`),
+                fetchBalances(),
+            ]);
+            setSettlementsHistory(history.data);
+        } catch (e) {
+            showToast('error', 'Could not update settlement', e.response?.data?.detail || 'Please try again.');
+        }
+    };
+
     if (loadedGroupId !== id) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-text-muted">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-accent mb-4"></div>
@@ -466,14 +481,22 @@ export default function GroupDetailPage() {
                     ) : (
                         settlementsHistory.map(h => (
                             <div key={h.id} className="flex items-center gap-3.5 py-4 border-b border-border last:border-b-0">
-                                <div className="w-10 h-10 rounded-full bg-green/10 flex items-center justify-center text-green text-sm">₹</div>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm ${h.status === 'pending' ? 'bg-yellow/10 text-yellow' : h.status === 'rejected' ? 'bg-red/10 text-red' : 'bg-green/10 text-green'}`}>₹</div>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-semibold truncate">
                                         <span className="text-accent-light">{h.from_user_name}</span> paid <span className="text-accent-light">{h.to_user_name}</span>
                                     </div>
-                                    <div className="text-xs text-text-muted mt-1">Via {h.payment_method} • {new Date(h.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
+                                    <div className="text-xs text-text-muted mt-1">Via {h.payment_method} • {h.status} • {new Date(h.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</div>
                                 </div>
-                                <div className="text-sm font-extrabold text-green">₹{h.amount}</div>
+                                <div className="text-right">
+                                    <div className={`text-sm font-extrabold ${h.status === 'pending' ? 'text-yellow' : h.status === 'rejected' ? 'text-red' : 'text-green'}`}>₹{h.amount}</div>
+                                    {h.status === 'pending' && (h.to_user === user?.id || isAdmin) && (
+                                        <div className="flex gap-1 mt-1">
+                                            <button onClick={() => handleSettlementDecision(h.id, 'approve')} className="text-[10px] font-bold text-green hover:underline">Approve</button>
+                                            <button onClick={() => handleSettlementDecision(h.id, 'reject')} className="text-[10px] font-bold text-red hover:underline">Reject</button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))
                     )}
