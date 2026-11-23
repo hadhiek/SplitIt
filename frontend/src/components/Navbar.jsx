@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useToast } from './ToastProvider';
 import { useAuth } from '../contexts/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 const pageTitles = {
     '/': 'Dashboard',
@@ -70,6 +71,8 @@ export default function Navbar() {
     const unreadCount = notifications.filter(n => !n.read).length;
     const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
     const initials = displayName.slice(0, 2).toUpperCase();
+    const androidApkUrl = import.meta.env.VITE_ANDROID_APK_URL;
+    const isNativeApp = Capacitor.isNativePlatform();
 
     const handleSignOut = async () => {
         setShowAccount(false);
@@ -177,6 +180,17 @@ export default function Navbar() {
                                 <div className="text-sm font-semibold truncate">{displayName}</div>
                                 <div className="text-xs text-text-muted truncate">{user?.email}</div>
                             </div>
+                            {!isNativeApp && androidApkUrl && (
+                                <a
+                                    href={androidApkUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="block px-4 py-3 border-b border-border hover:bg-white/5 transition"
+                                >
+                                    <div className="text-sm font-semibold text-text-primary">Download Android app</div>
+                                    <div className="text-xs text-text-muted mt-1 leading-relaxed">Install the latest SplitIt APK on your Android phone.</div>
+                                </a>
+                            )}
                             <button type="button" onClick={handleSignOut} className="w-full px-4 py-3 text-left text-sm font-semibold text-red hover:bg-red/5">
                                 Sign out
                             </button>
